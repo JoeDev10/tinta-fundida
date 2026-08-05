@@ -165,9 +165,10 @@ necesita un backend. Se puede agregar después sin rehacer el sitio.
 
 ## Las pruebas automáticas
 
-El proyecto trae 47 pruebas que abren el sitio y el panel de verdad y los revisan
+El proyecto trae 56 pruebas que abren el sitio y el panel de verdad y los revisan
 solas: que los links de WhatsApp se armen bien, que las fotos se achiquen, que la
-clave no se filtre, que el texto se vea sin scrollear.
+clave no se filtre, que el texto se vea sin scrollear, que el nombre del negocio
+no rompa la barra en celular y que ningún filtro del catálogo quede vacío.
 
 **Para correrlas** necesitás levantar un servidor local (con doble click no
 funcionan: el navegador bloquea que una página lea a otra). En la carpeta del

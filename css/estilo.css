@@ -277,11 +277,15 @@ h1,h2,h3,h4{
   gap:2rem; height:70px;
 }
 
+/* nowrap + flex:none: el nombre lo escribe el dueño desde el panel y la
+   barra mide 70px fijos, así que un nombre partido en dos renglones se
+   desbordaría sin que nada avise. Con esto, uno que no entra se pisa con
+   la hamburguesa — que es visible y lo caza la prueba del nav. */
 .logo{
   font-family:var(--f-display);
   font-weight:700; font-size:1.32rem; letter-spacing:.02em;
   color:var(--txt-hi); display:flex; align-items:baseline; gap:.42rem;
-  text-transform:uppercase;
+  text-transform:uppercase; white-space:nowrap; flex:none;
 }
 .logo b{ color:var(--lime); text-shadow:var(--glow-lime); }
 .logo i{
