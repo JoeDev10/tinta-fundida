@@ -6,11 +6,15 @@ css/admin.css
 js/admin.js
 js/clave.js
 
-# tests (no hacen falta en el sitio publicado)
-tests/
+# Las pruebas SÍ van al repo: son las que corren solas en cada push.
+# Como GitHub Pages sirve todo lo que está en el repo, la carpeta tests/
+# también queda publicada. No es un problema —no hay nada secreto ahí—
+# pero por eso el panel sigue afuera: si admin.html entrara acá, quedaría
+# vivo en internet, y ahí sí la clave dejaría de servir de algo.
 
 # herramientas locales
 .claude/
+node_modules/
 
 # sistema
 Thumbs.db

@@ -170,9 +170,16 @@ solas: que los links de WhatsApp se armen bien, que las fotos se achiquen, que l
 clave no se filtre, que el texto se vea sin scrollear, que el nombre del negocio
 no rompa la barra en celular y que ningún filtro del catálogo quede vacío.
 
-**Para correrlas** necesitás levantar un servidor local (con doble click no
-funcionan: el navegador bloquea que una página lea a otra). En la carpeta del
-proyecto:
+**35 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
+rompe te llega un mail y el commit queda con una cruz roja. No tenés que hacer
+nada para que pase.
+
+**Las otras 21 hay que correrlas acá.** Son las que abren el panel, y el panel
+no está en el repo (por eso nadie puede entrar desde internet). En GitHub esas
+aparecen como *salteadas*, no como falladas.
+
+Para correr las 56 necesitás un servidor local (con doble click no funcionan:
+el navegador bloquea que una página lea a otra). En la carpeta del proyecto:
 
 ```bash
 python -m http.server 5173
@@ -182,6 +189,10 @@ Y entrás a **http://localhost:5173/tests/** → botón *Correr las pruebas*.
 
 Corré esto **antes de publicar** cada vez que se toque el código. Si algo se
 rompió, te lo dice en rojo y con el motivo.
+
+> Para quien toque el código: `npm test` hace lo mismo desde la terminal, sin
+> abrir ninguna ventana. La primera vez pide `npm install` y
+> `npx playwright install chromium`.
 
 ---
 
@@ -201,7 +212,12 @@ impresion 3D/
 ├── css/admin.css       diseño del panel
 ├── js/admin.js         hace funcionar el panel
 ├── js/clave.js         ← TU CLAVE
+│
+├── ── ANDAMIAJE (está en el repo, no toca el sitio) ──
 ├── tests/              las pruebas automáticas
+├── scripts/            las corre sin abrir ventana
+├── .github/workflows/  hace que GitHub las corra en cada push
+├── package.json        de qué dependen las pruebas
 └── LEEME.md            esto que estás leyendo
 ```
 

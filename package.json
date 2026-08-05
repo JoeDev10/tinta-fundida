@@ -1,0 +1,11 @@
+{
+  "name": "tinta-fundida",
+  "private": true,
+  "description": "Sitio de catálogo de Tinta Fundida. El sitio no usa nada de esto: es solo para correr las pruebas.",
+  "scripts": {
+    "test": "node scripts/correr-pruebas.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

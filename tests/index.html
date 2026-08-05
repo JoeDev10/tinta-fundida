@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pruebas · Impresiones Parulo</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../css/estilo.css">
+<style>
+  body{ background:var(--void-2); }
+  .marco{ max-width:940px; margin:0 auto; padding:2.5rem 1.5rem 5rem; position:relative; z-index:1; }
+
+  h1{ font-size:1.9rem; text-transform:uppercase; margin:0 0 .3rem; }
+  .sub{ color:var(--txt-dim); font-size:.9rem; margin:0 0 2rem; }
+
+  .barra-sup{ display:flex; gap:.8rem; align-items:center; flex-wrap:wrap; margin-bottom:2rem; }
+
+  .tablero{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1px;
+    background:var(--line); border:1px solid var(--line); margin-bottom:2rem;
+  }
+  .celda{ background:var(--surface); padding:1.1rem; text-align:center; }
+  .celda b{ display:block; font-family:var(--f-display); font-size:1.9rem; line-height:1; color:var(--txt-hi); }
+  .celda span{
+    font-family:var(--f-mono); font-size:.62rem; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--txt-dim); margin-top:.5rem; display:block;
+  }
+  .celda.ok b{ color:var(--lime); }
+  .celda.mal b{ color:var(--magenta); }
+
+  .progreso{ height:3px; background:var(--surface-2); margin-bottom:2rem; overflow:hidden; }
+  .progreso i{ display:block; height:100%; width:0; background:var(--lime); box-shadow:var(--glow-lime); transition:width .2s; }
+
+  .grupo{
+    font-family:var(--f-mono); font-size:.66rem; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--lime); margin:2rem 0 .8rem; display:flex; align-items:center; gap:.8rem;
+  }
+  .grupo::after{ content:""; flex:1; height:1px; background:var(--line); }
+
+  .t{
+    display:flex; align-items:flex-start; gap:.9rem;
+    padding:.7rem .9rem; border:1px solid var(--line); background:var(--surface);
+    margin-bottom:.4rem; font-size:.9rem;
+  }
+  .t.mal{ border-color:rgba(255,45,111,.45); background:rgba(255,45,111,.05); }
+  .t.salt{ opacity:.5; }
+  .t__marca{ font-family:var(--f-mono); font-weight:600; flex:none; width:1.2rem; }
+  .t.bien .t__marca{ color:var(--lime); }
+  .t.mal  .t__marca{ color:var(--magenta); }
+  .t.salt .t__marca{ color:var(--txt-dim); }
+  .t__motivo{ font-family:var(--f-mono); font-size:.72rem; color:var(--txt-dim); margin-top:.35rem; }
+  .t__cuerpo{ flex:1; min-width:0; }
+  .t__nombre{ color:var(--txt-hi); }
+  .t__error{
+    font-family:var(--f-mono); font-size:.76rem; color:var(--magenta);
+    margin-top:.45rem; white-space:pre-wrap; word-break:break-word;
+  }
+  .t__ms{ font-family:var(--f-mono); font-size:.66rem; color:var(--txt-dim); flex:none; }
+
+  .veredicto{
+    margin-top:2.5rem; padding:1.5rem; text-align:center;
+    font-family:var(--f-mono); font-size:.8rem; letter-spacing:.16em; text-transform:uppercase;
+    border:1px solid var(--lime); color:var(--lime);
+  }
+  .veredicto.mal{ border-color:var(--magenta); color:var(--magenta); }
+
+  .aviso{
+    border-left:2px solid var(--cyan); background:rgba(37,217,240,.05);
+    padding:.9rem 1.1rem; font-size:.85rem; color:var(--txt); margin-bottom:2rem;
+  }
+  .aviso strong{ color:var(--cyan); }
+  .aviso code{ font-family:var(--f-mono); font-size:.85em; color:var(--lime); }
+</style>
+</head>
+<body>
+
+<div class="capa-scan" aria-hidden="true"></div>
+
+<div class="marco">
+  <h1>Pruebas automáticas</h1>
+  <p class="sub">Abren el sitio y el panel de verdad y los revisan como lo haría una persona.</p>
+
+  <div class="aviso" id="aviso-servidor" hidden>
+    <strong>Abrilas desde un servidor local.</strong>
+    Con doble click (<code>file://</code>) el navegador bloquea la lectura entre páginas y las pruebas no pueden mirar adentro.
+    Corré <code>python -m http.server 5173</code> en la carpeta del proyecto y entrá a
+    <code>http://localhost:5173/tests/</code>
+  </div>
+
+  <div class="barra-sup">
+    <button class="btn btn--lleno" id="correr"><span>Correr las pruebas</span></button>
+    <a class="btn btn--fantasma" href="../index.html" target="_blank" rel="noopener"><span>Ver el sitio</span></a>
+    <a class="btn btn--fantasma" href="../admin.html" target="_blank" rel="noopener"><span>Ver el panel</span></a>
+  </div>
+
+  <div class="tablero">
+    <div class="celda"><b id="n-total">—</b><span>Pruebas</span></div>
+    <div class="celda ok"><b id="n-bien">0</b><span>Pasaron</span></div>
+    <div class="celda mal"><b id="n-mal">0</b><span>Fallaron</span></div>
+    <div class="celda"><b id="n-salt">0</b><span>Salteadas</span></div>
+    <div class="celda"><b id="n-ms">—</b><span>Duración</span></div>
+  </div>
+
+  <div class="progreso"><i id="barra"></i></div>
+
+  <div id="salida"></div>
+  <div id="veredicto"></div>
+</div>
+
+<script src="../js/datos.js"></script>
+<script src="../tests/pruebas.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+
+  if (location.protocol === 'file:') $('#aviso-servidor').hidden = false;
+
+  $('#n-total').textContent = window.PRUEBAS.total();
+
+  $('#correr').addEventListener('click', function () {
+    var boton = this;
+    boton.disabled = true;
+    boton.querySelector('span').textContent = 'Corriendo…';
+    $('#salida').innerHTML = '';
+    $('#veredicto').innerHTML = '';
+    $('#n-bien').textContent = '0';
+    $('#n-mal').textContent = '0';
+    $('#n-salt').textContent = '0';
+
+    var t0 = Date.now(), bien = 0, mal = 0, salt = 0, grupoPintado = '';
+
+    window.PRUEBAS.correr(function (r, hechas, total) {
+      if (r.saltada) salt++; else if (r.ok) bien++; else mal++;
+      $('#n-bien').textContent = bien;
+      $('#n-mal').textContent = mal;
+      $('#n-salt').textContent = salt;
+      $('#barra').style.width = (hechas / total * 100) + '%';
+
+      if (r.grupo !== grupoPintado) {
+        grupoPintado = r.grupo;
+        var g = document.createElement('div');
+        g.className = 'grupo';
+        g.textContent = r.grupo;
+        $('#salida').appendChild(g);
+      }
+
+      var fila = document.createElement('div');
+      fila.className = 't ' + (r.saltada ? 'salt' : r.ok ? 'bien' : 'mal');
+      fila.innerHTML =
+        '<span class="t__marca">' + (r.saltada ? '–' : r.ok ? '✓' : '✕') + '</span>' +
+        '<span class="t__cuerpo"><span class="t__nombre"></span>' +
+        (r.saltada ? '<div class="t__motivo"></div>' : r.ok ? '' : '<div class="t__error"></div>') +
+        '</span>' +
+        '<span class="t__ms">' + (r.saltada ? '—' : r.ms + 'ms') + '</span>';
+      fila.querySelector('.t__nombre').textContent = r.nombre;
+      if (r.saltada) fila.querySelector('.t__motivo').textContent = r.motivo;
+      else if (!r.ok) fila.querySelector('.t__error').textContent = r.error;
+      $('#salida').appendChild(fila);
+    }).then(function (resultados) {
+      var seg = ((Date.now() - t0) / 1000).toFixed(1);
+      $('#n-ms').textContent = seg + 's';
+
+      var fallaron  = resultados.filter(function (r) { return !r.ok; });
+      var salteadas = resultados.filter(function (r) { return r.saltada; });
+      var corridas  = resultados.length - salteadas.length;
+      var cola = salteadas.length
+        ? ' · ' + salteadas.length + ' salteadas (necesitan el panel)'
+        : '';
+
+      var v = $('#veredicto');
+      v.innerHTML = '<div class="veredicto' + (fallaron.length ? ' mal' : '') + '">' +
+        (fallaron.length
+          ? '✕ ' + fallaron.length + (fallaron.length === 1 ? ' prueba falló' : ' pruebas fallaron')
+          : '✓ Pasaron las ' + corridas + ' pruebas · el sitio está sano' + cola) +
+        '</div>';
+
+      boton.disabled = false;
+      boton.querySelector('span').textContent = 'Correr de nuevo';
+
+      /* para poder leer el resultado desde afuera */
+      window.__RESULTADO = {
+        total: resultados.length,
+        corridas: corridas,
+        bien: corridas - fallaron.length,
+        mal: fallaron.length,
+        salteadas: salteadas.length,
+        segundos: seg,
+        fallas: fallaron.map(function (r) { return r.grupo + ' › ' + r.nombre + ': ' + r.error; })
+      };
+    });
+  });
+})();
+</script>
+</body>
+</html>
