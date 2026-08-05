@@ -1,3 +1,14 @@
+# ── El panel NO se publica ──────────────────────────────────
+# Vive solo en la computadora del dueño. Si no está en el
+# servidor, nadie puede entrar aunque adivine la dirección.
+admin.html
+css/admin.css
+js/admin.js
+js/clave.js
+
+# tests (no hacen falta en el sitio publicado)
+tests/
+
 # herramientas locales
 .claude/
 

@@ -50,20 +50,34 @@
   var porRevelar = [];
   var pendiente = false;
 
+  /* El chequeo real. Es síncrono a propósito: si esto dependiera de
+     requestAnimationFrame o de IntersectionObserver, una pestaña que el
+     navegador no está pintando nunca los ejecuta y el texto queda
+     invisible para siempre. La animación puede perderse; el contenido no. */
+  function revisarYa() {
+    var limite = window.innerHeight - 60;
+    porRevelar = porRevelar.filter(function (n) {
+      if (n.getBoundingClientRect().top < limite) {
+        n.classList.add('visible');
+        return false;
+      }
+      return true;
+    });
+  }
+
+  /* Para el scroll sí conviene amortiguar. rAF cuando el navegador pinta,
+     y un temporizador de respaldo para cuando no. */
   function revisar() {
     if (pendiente) return;
     pendiente = true;
-    requestAnimationFrame(function () {
-      pendiente = false;
-      var limite = window.innerHeight - 60;
-      porRevelar = porRevelar.filter(function (n) {
-        if (n.getBoundingClientRect().top < limite) {
-          n.classList.add('visible');
-          return false;
-        }
-        return true;
-      });
-    });
+    var hecho = false;
+    var correr = function () {
+      if (hecho) return;
+      hecho = true; pendiente = false;
+      revisarYa();
+    };
+    requestAnimationFrame(correr);
+    setTimeout(correr, 120);
   }
 
   function observar(nodos) {
@@ -72,7 +86,7 @@
       n.dataset.enCola = '1';
       porRevelar.push(n);
     });
-    revisar();
+    revisarYa();
   }
 
   window.addEventListener('scroll', revisar, { passive: true });
@@ -303,6 +317,7 @@
   $('#pie-contacto').innerHTML = itemsPie.join('');
 
   $('#pie-copy').textContent = '© ' + new Date().getFullYear() + ' ' + datos.marca.nombre;
+  $('#pie-hecho').textContent = datos.contacto.ciudad || '';
 
   /* ==========================================================
      INTERACCIONES

@@ -15,14 +15,21 @@ tiene candadito (HTTPS) y es gratis para siempre.
 
 ---
 
-## Cómo lo abro
+## Cómo entro al panel
 
-Doble click en **`index.html`** y se abre en el navegador. Eso es todo.
+**El panel no está en internet, y eso es a propósito.** Vive solo en esta
+computadora, en el archivo `admin.html`. Si alguien prueba entrar a
+`joedev10.github.io/impresiones-parulo/admin.html`, no encuentra nada.
 
-Para entrar al panel: **`admin.html`** — o el link "Panel de administración" abajo de todo en el sitio.
+Para abrirlo: doble click en **`admin.html`**.
+Para ver el sitio: doble click en **`index.html`**.
 
-> **Clave inicial: `parulo3d`**
-> Cambiala apenas entres, desde *Publicar → Seguridad*.
+> **Clave: `Molde-Filamento47_A822`**
+> Está guardada en `js/clave.js`. Para cambiarla, abrí ese archivo con el Bloc
+> de notas, cambiá el texto entre comillas y guardá.
+
+Conviene anotarla en el celular o en un papel. Si la perdés, se recupera
+abriendo `js/clave.js`.
 
 ---
 
@@ -34,11 +41,36 @@ Para entrar al panel: **`admin.html`** — o el link "Panel de administración" 
    - Va con código de país, sin `+`, sin espacios y **sin el 15**.
    - Ejemplo: si tu número es 11 2233-4455 → escribís `5491122334455`
    - Apretá *Probar el link* para confirmar que abre tu chat.
-3. **Catálogo** → *Nuevo producto*. Cargá foto, nombre, precio y descripción.
+3. **Catálogo** → cargá tus piezas (mirá abajo, es lo más rápido).
 4. Lo que editás se guarda solo. Mirá el punto verde arriba a la derecha.
 
 Cada producto tiene su propio botón que abre WhatsApp con el nombre de la pieza
 ya escrito, así el cliente no tiene que explicar qué quiere.
+
+---
+
+## Las fotos, en dos clicks
+
+En la pestaña **Catálogo** tenés tres formas, de la más rápida a la más precisa:
+
+**1. Varias de una (lo más rápido)**
+Agarrá varias fotos de tu carpeta y soltalas en el recuadro que dice
+*"Soltá tus fotos acá"*. Te crea **un producto por cada foto**, usando el nombre
+del archivo como nombre del producto. Después les ponés precio y descripción.
+
+> Truco: si nombrás los archivos `maceta-chica.jpg`, `porta-lapices.jpg`,
+> los productos salen ya con el nombre puesto.
+
+**2. Una foto a un producto que ya existe**
+Pasá el mouse por encima de la tarjeta y apretá **Agregar foto** (o *Cambiar
+foto* si ya tenía). Elegís el archivo y listo. También podés arrastrar la foto
+directamente encima de la tarjeta.
+
+**3. Borrar una foto**
+Pasá el mouse por la tarjeta y apretá **Quitar**. Un click, sin preguntas.
+La foto se va y el producto queda igual.
+
+Todo esto se guarda solo. No hay que apretar ningún "guardar".
 
 ---
 
@@ -106,19 +138,43 @@ y vuelve todo como estaba.
 
 ## Cosas que conviene saber
 
-**La clave no es seguridad real.** Ahora que el sitio es público, la clave
-`parulo3d` se puede leer en el código. Un desconocido podría entrar al panel.
+**El panel no se publica nunca.** Los archivos `admin.html`, `js/admin.js`,
+`css/admin.css` y `js/clave.js` están en el `.gitignore`: no viajan a internet.
+Por eso tu clave es una clave de verdad y no un adorno — no hay forma de que un
+desconocido la lea, porque el archivo no existe en el servidor.
 
-Pero **no puede hacerte daño**, y vale la pena entender por qué: el panel solo
-escribe en la computadora de quien lo usa. Para cambiar lo que ven tus clientes
-hay que subir el `datos.js` a GitHub, y eso requiere tu cuenta. O sea: alguien
-puede *mirar* el panel, pero no puede tocar tu sitio.
+**Todo lo que publicás es público.** Lo que cargues en el catálogo y subas con
+`datos.js` lo puede leer cualquiera. No pongas ahí precios de costo, datos de
+proveedores ni teléfonos personales.
 
-Igual, **no guardes nada sensible ahí** (precios de costo, datos de proveedores,
-teléfonos personales). Todo lo que cargues en el panel y publiques es público.
+**Si querés editar desde otra computadora o desde el celular,** hoy no se puede:
+el panel está atado a esta máquina. Se resuelve con un backend (fase 2), o
+copiando la carpeta entera a la otra computadora y restaurando una copia de
+seguridad.
 
 **Si querés que los cambios se publiquen solos** (sin bajar y subir `datos.js`), eso
 necesita un backend. Se puede agregar después sin rehacer el sitio.
+
+---
+
+## Las pruebas automáticas
+
+El proyecto trae 45 pruebas que abren el sitio y el panel de verdad y los revisan
+solas: que los links de WhatsApp se armen bien, que las fotos se achiquen, que la
+clave no se filtre, que el texto se vea sin scrollear.
+
+**Para correrlas** necesitás levantar un servidor local (con doble click no
+funcionan: el navegador bloquea que una página lea a otra). En la carpeta del
+proyecto:
+
+```bash
+python -m http.server 5173
+```
+
+Y entrás a **http://localhost:5173/tests/** → botón *Correr las pruebas*.
+
+Corré esto **antes de publicar** cada vez que se toque el código. Si algo se
+rompió, te lo dice en rojo y con el motivo.
 
 ---
 
@@ -126,15 +182,19 @@ necesita un backend. Se puede agregar después sin rehacer el sitio.
 
 ```
 impresion 3D/
+│
+├── ── SE PUBLICA ──────────────────────────────
 ├── index.html          el sitio que ven tus clientes
+├── css/estilo.css      diseño del sitio
+├── js/sitio.js         arma el sitio
+├── js/datos.js         ← TU CONTENIDO (el que se reemplaza al publicar)
+│
+├── ── NO SE PUBLICA (solo en esta compu) ──────
 ├── admin.html          el panel de administración
-├── css/
-│   ├── estilo.css      diseño del sitio
-│   └── admin.css       diseño del panel
-├── js/
-│   ├── datos.js        ← TU CONTENIDO (este es el que se reemplaza al publicar)
-│   ├── sitio.js        arma el sitio
-│   └── admin.js        hace funcionar el panel
+├── css/admin.css       diseño del panel
+├── js/admin.js         hace funcionar el panel
+├── js/clave.js         ← TU CLAVE
+├── tests/              las pruebas automáticas
 └── LEEME.md            esto que estás leyendo
 ```
 

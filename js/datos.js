@@ -90,9 +90,5 @@ window.DATOS_SITIO = {
     proceso: true,
     faq: true,
     stats: true
-  },
-
-  admin: {
-    clave: "parulo3d"
   }
 };
