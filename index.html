@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impresiones Parulo · Impresión 3D bajo demanda</title>
+<meta name="description" content="Impresiones Parulo · Taller de impresión 3D: diseños propios listos para llevar y piezas a medida desde tu archivo o desde tu idea.">
+<meta name="theme-color" content="#06070b">
+<link rel="stylesheet" href="css/estilo.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%2306070b'/><path d='M50 18 82 36v36L50 90 18 72V36z' fill='none' stroke='%23b8ff29' stroke-width='6'/></svg>">
+</head>
+<body>
+
+<!-- atmósfera -->
+<div class="capa-grilla" aria-hidden="true"></div>
+<div class="capa-scan"   aria-hidden="true"></div>
+<div class="capa-grano"  aria-hidden="true"></div>
+
+<div class="envoltura">
+
+  <!-- ==================== NAV ==================== -->
+  <header class="nav" id="nav">
+    <div class="contenedor nav__interior">
+      <a href="#inicio" class="logo" id="logo-nav"></a>
+
+      <nav>
+        <ul class="nav__links" id="menu">
+          <li><a href="#servicios">Servicios</a></li>
+          <li><a href="#catalogo">Catálogo</a></li>
+          <li><a href="#proceso">Cómo pedir</a></li>
+          <li><a href="#faq">Preguntas</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+
+      <a class="btn btn--lleno nav__cta" id="cta-nav" href="#" target="_blank" rel="noopener">
+        <span>WhatsApp</span>
+      </a>
+
+      <button class="nav__burger" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu">
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="inicio">
+
+    <!-- ==================== HERO ==================== -->
+    <section class="hero">
+      <div class="hero__resplandor" aria-hidden="true"></div>
+
+      <div class="contenedor hero__grid">
+        <div>
+          <p class="etiqueta" id="hero-kicker" data-reveal></p>
+
+          <h1 class="hero__titulo" id="hero-titulo" data-reveal style="--delay:80ms"></h1>
+
+          <p class="hero__bajada" id="hero-bajada" data-reveal style="--delay:180ms"></p>
+
+          <div class="hero__acciones" data-reveal style="--delay:260ms">
+            <a class="btn btn--lleno" id="hero-cta1" href="#" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.86 9.86 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.17c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.14.16-.29.18-.53.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.47-.29Z"/></svg>
+              <span id="hero-cta1-txt"></span>
+            </a>
+            <a class="btn btn--fantasma" href="#catalogo"><span id="hero-cta2-txt"></span></a>
+          </div>
+
+          <div class="hero__meta" id="hero-meta" data-reveal style="--delay:340ms"></div>
+        </div>
+
+        <div class="escena" aria-hidden="true">
+          <div class="escena__base"></div>
+          <div class="escena__aro"></div>
+          <div class="cubo">
+            <div class="cubo__cara"></div><div class="cubo__cara"></div>
+            <div class="cubo__cara"></div><div class="cubo__cara"></div>
+            <div class="cubo__cara"></div><div class="cubo__cara"></div>
+          </div>
+          <div class="escena__cabezal"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== STATS ==================== -->
+    <section id="bloque-stats" hidden>
+      <div class="contenedor">
+        <div class="stats" id="stats" data-reveal></div>
+      </div>
+    </section>
+
+    <!-- ==================== SERVICIOS ==================== -->
+    <section class="seccion" id="servicios" hidden>
+      <div class="contenedor">
+        <header class="cabecera-seccion" data-reveal>
+          <p class="etiqueta">Qué hacemos</p>
+          <h2 class="titulo-seccion">Dos formas de <span class="acento">trabajar</span></h2>
+          <p class="bajada-seccion">Ya sea que quieras algo listo o algo que todavía no existe, sale del mismo taller.</p>
+        </header>
+        <div class="servicios" id="lista-servicios"></div>
+      </div>
+    </section>
+
+    <!-- ==================== CATÁLOGO ==================== -->
+    <section class="seccion" id="catalogo" hidden>
+      <div class="contenedor">
+        <header class="cabecera-seccion" data-reveal>
+          <p class="etiqueta">Catálogo</p>
+          <h2 class="titulo-seccion">Listo para <span class="acento">imprimir</span></h2>
+          <p class="bajada-seccion">Todo se imprime a pedido, así que elegís el color. Tocá cualquier pieza para consultarla por WhatsApp.</p>
+        </header>
+
+        <div class="catalogo__barra" id="filtros" data-reveal role="group" aria-label="Filtrar por categoría"></div>
+        <div class="grilla-productos" id="grilla"></div>
+      </div>
+    </section>
+
+    <!-- ==================== PROCESO ==================== -->
+    <section class="seccion" id="proceso" hidden>
+      <div class="contenedor">
+        <header class="cabecera-seccion" data-reveal>
+          <p class="etiqueta">Cómo pedir</p>
+          <h2 class="titulo-seccion">De la idea a la <span class="acento">pieza</span></h2>
+        </header>
+        <div class="proceso" id="lista-proceso"></div>
+      </div>
+    </section>
+
+    <!-- ==================== FAQ ==================== -->
+    <section class="seccion" id="faq" hidden>
+      <div class="contenedor">
+        <header class="cabecera-seccion" data-reveal>
+          <p class="etiqueta">Preguntas frecuentes</p>
+          <h2 class="titulo-seccion">Antes de <span class="acento">escribir</span></h2>
+        </header>
+        <div class="faq" id="lista-faq" data-reveal></div>
+      </div>
+    </section>
+
+    <!-- ==================== CTA ==================== -->
+    <section class="seccion" id="contacto">
+      <div class="contenedor">
+        <div class="cta" data-reveal>
+          <p class="etiqueta" style="justify-content:center">Contacto directo</p>
+          <h2>¿Arrancamos?</h2>
+          <p id="cta-texto"></p>
+          <a class="btn btn--lleno" id="cta-final" href="#" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.86 9.86 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.17c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.14.16-.29.18-.53.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.47-.29Z"/></svg>
+            <span>Escribinos por WhatsApp</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="pie">
+    <div class="contenedor">
+      <div class="pie__grid">
+        <div>
+          <a href="#inicio" class="logo" id="logo-pie" style="margin-bottom:1rem"></a>
+          <p id="pie-slogan"></p>
+        </div>
+        <div>
+          <h4>Contacto</h4>
+          <ul id="pie-contacto"></ul>
+        </div>
+        <div>
+          <h4>Secciones</h4>
+          <ul>
+            <li><a href="#servicios">Servicios</a></li>
+            <li><a href="#catalogo">Catálogo</a></li>
+            <li><a href="#proceso">Cómo pedir</a></li>
+            <li><a href="#faq">Preguntas</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="pie__barra">
+        <span id="pie-copy"></span>
+        <a href="admin.html">Panel de administración</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<a class="flotante" id="flotante" href="#" target="_blank" rel="noopener">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.86 9.86 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.17c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.14.16-.29.18-.53.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.47-.29Z"/></svg>
+  <span>Consultar</span>
+</a>
+
+<script src="js/datos.js"></script>
+<script src="js/sitio.js"></script>
+</body>
+</html>

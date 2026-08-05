@@ -1,0 +1,339 @@
+/* ============================================================
+   SITIO PÚBLICO · render del contenido
+   ============================================================ */
+
+(function () {
+  'use strict';
+
+  var CLAVE_LS = 'parulo:contenido';
+
+  /* --- carga de contenido ---------------------------------- */
+  /* Si hay un borrador guardado en esta computadora, se muestra
+     ese (así el dueño ve sus cambios al instante). Si no, se usa
+     lo que está publicado en js/datos.js                        */
+  var datos, hayBorrador = false;
+  try {
+    var guardado = localStorage.getItem(CLAVE_LS);
+    if (guardado) { datos = JSON.parse(guardado); hayBorrador = true; }
+  } catch (e) { /* localStorage bloqueado o JSON roto: usamos el publicado */ }
+
+  if (!datos) datos = window.DATOS_SITIO;
+  if (!datos) return;
+
+  /* red de seguridad: si el borrador viene de una versión vieja,
+     que falte una clave no debe tumbar todo el sitio */
+  datos.secciones  = datos.secciones  || {};
+  datos.categorias = datos.categorias || [];
+  ['stats', 'servicios', 'productos', 'proceso', 'faq'].forEach(function (k) {
+    if (!Array.isArray(datos[k])) datos[k] = [];
+  });
+
+  var $  = function (s, c) { return (c || document).querySelector(s); };
+  var el = function (t, cls, html) {
+    var n = document.createElement(t);
+    if (cls) n.className = cls;
+    if (html != null) n.innerHTML = html;
+    return n;
+  };
+  var esc = function (s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  };
+
+  /* ==========================================================
+     REVELADO AL SCROLL
+     Se define antes de pintar nada, porque las secciones lo usan
+     a medida que se arman. La animación es decorativa: si algo
+     falla, el contenido tiene que quedar visible igual.
+     ========================================================== */
+  var porRevelar = [];
+  var pendiente = false;
+
+  function revisar() {
+    if (pendiente) return;
+    pendiente = true;
+    requestAnimationFrame(function () {
+      pendiente = false;
+      var limite = window.innerHeight - 60;
+      porRevelar = porRevelar.filter(function (n) {
+        if (n.getBoundingClientRect().top < limite) {
+          n.classList.add('visible');
+          return false;
+        }
+        return true;
+      });
+    });
+  }
+
+  function observar(nodos) {
+    Array.prototype.forEach.call(nodos, function (n) {
+      if (n.dataset.enCola === '1' || n.classList.contains('visible')) return;
+      n.dataset.enCola = '1';
+      porRevelar.push(n);
+    });
+    revisar();
+  }
+
+  window.addEventListener('scroll', revisar, { passive: true });
+  window.addEventListener('resize', revisar, { passive: true });
+  window.addEventListener('load', revisar);
+
+  /* --- WhatsApp -------------------------------------------- */
+  function linkWhatsapp(mensaje) {
+    var num = String(datos.contacto.whatsapp || '').replace(/\D/g, '');
+    var txt = mensaje || datos.contacto.mensaje || 'Hola!';
+    if (!num) return '#';
+    return 'https://wa.me/' + num + '?text=' + encodeURIComponent(txt);
+  }
+
+  /* --- iconos ---------------------------------------------- */
+  var ICONOS = {
+    caja: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg>',
+    engranaje: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M22 12h-3M5 12H2m15.07-7.07-2.12 2.12M9.05 14.95l-2.12 2.12m0-12.14 2.12 2.12m5.9 5.9 2.12 2.12"/></svg>',
+    capas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg>',
+    rayo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+    regla: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h20v8H2z"/><path d="M6 8v3M10 8v5M14 8v3M18 8v5"/></svg>',
+    pieza: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M9 3v4H3m18 0h-6V3M3 15h6v6m6 0v-6h6"/></svg>'
+  };
+
+  var MARCADORES = [
+    '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M50 12 86 32v40L50 92 14 72V32z"/><path d="m14 32 36 20 36-20M50 52v40"/></svg>',
+    '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="50" cy="50" r="34"/><ellipse cx="50" cy="50" rx="34" ry="13"/><ellipse cx="50" cy="50" rx="13" ry="34"/></svg>',
+    '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M50 14 84 76H16z"/><path d="M50 14v62M16 76l34-24 34 24"/></svg>',
+    '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="20" y="20" width="46" height="46"/><path d="M34 34h46v46H34zM20 20l14 14M66 20l14 14M20 66l14 14M66 66l14 14"/></svg>'
+  ];
+
+  /* ==========================================================
+     MARCA
+     ========================================================== */
+  var htmlLogo = '<b>' + esc(datos.marca.logo) + '</b><i>' + esc(datos.marca.logoSufijo) + '</i>';
+  $('#logo-nav').innerHTML = htmlLogo;
+  $('#logo-pie').innerHTML = htmlLogo;
+  document.title = datos.marca.nombre + ' · ' + datos.marca.slogan;
+
+  /* ==========================================================
+     HERO
+     ========================================================== */
+  $('#hero-kicker').textContent = datos.hero.kicker;
+  $('#hero-bajada').textContent = datos.hero.bajada;
+  $('#hero-cta1-txt').textContent = datos.hero.ctaPrimario;
+  $('#hero-cta2-txt').textContent = datos.hero.ctaSecundario;
+
+  /* el título se parte en líneas; la primera palabra lleva glitch */
+  (function () {
+    var palabras = String(datos.hero.titulo).trim().split(/\s+/);
+    var lineas = [], porLinea = Math.ceil(palabras.length / 3) || 1;
+    for (var i = 0; i < palabras.length; i += porLinea) {
+      lineas.push(palabras.slice(i, i + porLinea).join(' '));
+    }
+    $('#hero-titulo').innerHTML = lineas.map(function (t, i) {
+      if (i === 0) {
+        var p = t.split(' '), primera = p.shift();
+        return '<span class="linea"><span class="glitch" data-txt="' + esc(primera) + '">' +
+               esc(primera) + '</span>' + (p.length ? ' ' + esc(p.join(' ')) : '') + '</span>';
+      }
+      return '<span class="linea">' + esc(t) + '</span>';
+    }).join('');
+  })();
+
+  var metas = [];
+  if (datos.contacto.ciudad)  metas.push(datos.contacto.ciudad);
+  if (datos.contacto.horario) metas.push(datos.contacto.horario);
+  if (datos.contacto.envios)  metas.push(datos.contacto.envios);
+  $('#hero-meta').innerHTML = metas.map(function (m) { return '<span>' + esc(m) + '</span>'; }).join('');
+
+  /* ==========================================================
+     STATS
+     ========================================================== */
+  if (datos.secciones.stats && datos.stats.length) {
+    $('#bloque-stats').hidden = false;
+    $('#stats').innerHTML = datos.stats.map(function (s) {
+      return '<div class="stat">' +
+        '<div class="stat__valor">' + esc(s.valor) + '<small>' + esc(s.unidad || '') + '</small></div>' +
+        '<div class="stat__etiqueta">' + esc(s.etiqueta) + '</div></div>';
+    }).join('');
+  }
+
+  /* ==========================================================
+     SERVICIOS
+     ========================================================== */
+  if (datos.secciones.servicios && datos.servicios.length) {
+    $('#servicios').hidden = false;
+    $('#lista-servicios').innerHTML = datos.servicios.map(function (s, i) {
+      var bullets = (s.bullets || []).filter(Boolean)
+        .map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('');
+      return '<article class="tarjeta servicio" data-reveal style="--delay:' + (i * 110) + 'ms">' +
+        '<div class="servicio__icono">' + (ICONOS[s.icono] || ICONOS.caja) + '</div>' +
+        '<h3>' + esc(s.titulo) + '</h3>' +
+        '<p>' + esc(s.desc) + '</p>' +
+        (bullets ? '<ul>' + bullets + '</ul>' : '') +
+        '</article>';
+    }).join('');
+  }
+
+  /* ==========================================================
+     CATÁLOGO
+     ========================================================== */
+  var visibles = (datos.productos || []).filter(function (p) { return p.visible !== false; });
+
+  if (datos.secciones.catalogo && visibles.length) {
+    $('#catalogo').hidden = false;
+
+    var usadas = datos.categorias.filter(function (c) {
+      return visibles.some(function (p) { return p.categoria === c; });
+    });
+
+    $('#filtros').innerHTML = ['Todo'].concat(usadas).map(function (c, i) {
+      return '<button class="filtro' + (i === 0 ? ' activo' : '') +
+             '" data-cat="' + esc(c) + '" aria-pressed="' + (i === 0) + '">' + esc(c) + '</button>';
+    }).join('');
+
+    pintarProductos('Todo');
+
+    $('#filtros').addEventListener('click', function (ev) {
+      var b = ev.target.closest('.filtro');
+      if (!b) return;
+      Array.prototype.forEach.call(this.children, function (n) {
+        var act = n === b;
+        n.classList.toggle('activo', act);
+        n.setAttribute('aria-pressed', act);
+      });
+      pintarProductos(b.dataset.cat);
+    });
+  }
+
+  function pintarProductos(cat) {
+    var lista = cat === 'Todo'
+      ? visibles
+      : visibles.filter(function (p) { return p.categoria === cat; });
+
+    var cont = $('#grilla');
+
+    if (!lista.length) {
+      cont.innerHTML = '<p class="vacio">No hay piezas en esta categoría todavía</p>';
+      return;
+    }
+
+    cont.innerHTML = lista.map(function (p, i) {
+      var msg = 'Hola! Me interesa "' + p.nombre + '"' +
+                (p.precio ? ' (' + p.precio + ')' : '') + '. ¿Está disponible?';
+
+      var foto = p.imagen
+        ? '<img src="' + esc(p.imagen) + '" alt="' + esc(p.nombre) + '" loading="lazy">'
+        : '<div class="marcador">' + MARCADORES[i % MARCADORES.length] +
+          '<span>Sin foto cargada</span></div>';
+
+      return '<article class="tarjeta producto" data-reveal style="--delay:' + ((i % 3) * 90) + 'ms">' +
+        '<div class="producto__foto">' +
+          (p.categoria ? '<span class="producto__chip">' + esc(p.categoria) + '</span>' : '') +
+          (p.destacado ? '<span class="producto__destacado">Destacado</span>' : '') +
+          foto +
+        '</div>' +
+        '<div class="producto__cuerpo">' +
+          '<h3>' + esc(p.nombre) + '</h3>' +
+          '<p class="producto__desc">' + esc(p.desc) + '</p>' +
+          '<div class="producto__pie">' +
+            '<span class="producto__precio">' + esc(p.precio || 'Consultar') + '</span>' +
+            '<a class="producto__pedir" href="' + esc(linkWhatsapp(msg)) + '" target="_blank" rel="noopener">Pedir →</a>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    observar(cont.querySelectorAll('[data-reveal]'));
+  }
+
+  /* ==========================================================
+     PROCESO
+     ========================================================== */
+  if (datos.secciones.proceso && datos.proceso.length) {
+    $('#proceso').hidden = false;
+    $('#lista-proceso').innerHTML = datos.proceso.map(function (p, i) {
+      return '<div class="paso" data-reveal style="--delay:' + (i * 100) + 'ms">' +
+        '<div class="paso__num">' + String(i + 1).padStart(2, '0') + ' / ' +
+          String(datos.proceso.length).padStart(2, '0') + '</div>' +
+        '<h3>' + esc(p.titulo) + '</h3>' +
+        '<p>' + esc(p.desc) + '</p></div>';
+    }).join('');
+  }
+
+  /* ==========================================================
+     FAQ
+     ========================================================== */
+  if (datos.secciones.faq && datos.faq.length) {
+    $('#faq').hidden = false;
+    $('#lista-faq').innerHTML = datos.faq.map(function (f, i) {
+      return '<div class="faq__item">' +
+        '<button class="faq__boton" aria-expanded="false" aria-controls="faq-p' + i + '">' +
+          esc(f.p) + '</button>' +
+        '<div class="faq__panel" id="faq-p' + i + '"><div><p>' + esc(f.r) + '</p></div></div>' +
+      '</div>';
+    }).join('');
+
+    $('#lista-faq').addEventListener('click', function (ev) {
+      var b = ev.target.closest('.faq__boton');
+      if (!b) return;
+      var item = b.parentElement, abierto = item.classList.toggle('abierto');
+      b.setAttribute('aria-expanded', abierto);
+    });
+  }
+
+  /* ==========================================================
+     CONTACTO / FOOTER
+     ========================================================== */
+  $('#cta-texto').textContent = 'Contame qué necesitás y te paso presupuesto sin cargo.' +
+    (datos.contacto.horario ? ' ' + datos.contacto.horario + '.' : '');
+
+  ['#cta-nav', '#hero-cta1', '#cta-final', '#flotante'].forEach(function (sel) {
+    $(sel).href = linkWhatsapp();
+  });
+
+  $('#pie-slogan').textContent = datos.marca.slogan + '. ' +
+    (datos.contacto.envios || '');
+
+  var itemsPie = [];
+  var num = String(datos.contacto.whatsapp || '').replace(/\D/g, '');
+  if (num) itemsPie.push('<li><a href="' + esc(linkWhatsapp()) + '" target="_blank" rel="noopener">WhatsApp +' + esc(num) + '</a></li>');
+  if (datos.contacto.email) itemsPie.push('<li><a href="mailto:' + esc(datos.contacto.email) + '">' + esc(datos.contacto.email) + '</a></li>');
+  if (datos.contacto.instagram) itemsPie.push('<li><a href="https://instagram.com/' + esc(datos.contacto.instagram.replace('@', '')) + '" target="_blank" rel="noopener">Instagram @' + esc(datos.contacto.instagram.replace('@', '')) + '</a></li>');
+  if (datos.contacto.tiktok) itemsPie.push('<li><a href="https://tiktok.com/@' + esc(datos.contacto.tiktok.replace('@', '')) + '" target="_blank" rel="noopener">TikTok @' + esc(datos.contacto.tiktok.replace('@', '')) + '</a></li>');
+  if (datos.contacto.ciudad) itemsPie.push('<li>' + esc(datos.contacto.ciudad) + '</li>');
+  if (datos.contacto.horario) itemsPie.push('<li>' + esc(datos.contacto.horario) + '</li>');
+  $('#pie-contacto').innerHTML = itemsPie.join('');
+
+  $('#pie-copy').textContent = '© ' + new Date().getFullYear() + ' ' + datos.marca.nombre;
+
+  /* ==========================================================
+     INTERACCIONES
+     ========================================================== */
+
+  /* nav compacta al scrollear */
+  var nav = $('#nav');
+  var alScroll = function () { nav.classList.toggle('compacta', window.scrollY > 40); };
+  window.addEventListener('scroll', alScroll, { passive: true });
+  alScroll();
+
+  /* menú móvil */
+  var burger = $('#burger'), menu = $('#menu');
+  burger.addEventListener('click', function () {
+    var abierto = menu.classList.toggle('abierta');
+    burger.setAttribute('aria-expanded', abierto);
+    burger.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+  });
+  menu.addEventListener('click', function (ev) {
+    if (ev.target.tagName === 'A') {
+      menu.classList.remove('abierta');
+      burger.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  observar(document.querySelectorAll('[data-reveal]'));
+
+  /* aviso: hay cambios sin publicar en esta computadora */
+  if (hayBorrador) {
+    var aviso = el('div', 'aviso-borrador');
+    aviso.innerHTML = 'Vista con cambios locales sin publicar · <a href="admin.html">Panel</a>';
+    document.body.appendChild(aviso);
+  }
+})();
