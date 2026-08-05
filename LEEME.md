@@ -3,6 +3,16 @@
 Sitio de catálogo con contacto por WhatsApp y panel de administración.
 No necesita servidor, base de datos ni pagar nada por mes.
 
+## 🌐 El sitio está online
+
+**https://joedev10.github.io/impresiones-parulo/**
+
+Ese es el link para mandar por WhatsApp. Funciona en cualquier celular,
+tiene candadito (HTTPS) y es gratis para siempre.
+
+- Panel: https://joedev10.github.io/impresiones-parulo/admin.html
+- Código: https://github.com/JoeDev10/impresiones-parulo
+
 ---
 
 ## Cómo lo abro
@@ -32,18 +42,6 @@ ya escrito, así el cliente no tiene que explicar qué quiere.
 
 ---
 
-## Cómo lo pongo online
-
-El sitio anda perfecto en tu computadora, pero para que lo vean tus clientes hay
-que subirlo a internet. Es gratis:
-
-1. Creá una cuenta en [Netlify](https://app.netlify.com/drop) (o Vercel, o GitHub Pages).
-2. Arrastrá **toda esta carpeta** a la ventana de Netlify Drop.
-3. Te da una dirección tipo `impresiones-parulo.netlify.app`. Listo, ya está online.
-4. Si después querés tu propio dominio (`impresionesparulo.com.ar`), se conecta desde ahí.
-
----
-
 ## Cómo publico los cambios
 
 Esto es lo único que tiene un paso extra, así que leelo con atención.
@@ -51,15 +49,33 @@ Esto es lo único que tiene un paso extra, así que leelo con atención.
 Cuando editás en el panel, los cambios se guardan **en tu computadora**. Los ves
 vos al instante, pero **tus clientes todavía no**.
 
-Para publicarlos:
+### Los 3 pasos
 
 1. Panel → pestaña **Publicar** → botón **Descargar datos.js**
-2. Se descarga un archivo llamado `datos.js`
-3. Subilo a tu hosting **dentro de la carpeta `js/`**, reemplazando el que ya está
-   (en Netlify: volvés a arrastrar la carpeta entera con el archivo nuevo adentro)
+   Se baja un archivo llamado `datos.js` a tu carpeta de Descargas.
+
+2. Entrá a **[la carpeta js/ del repo](https://github.com/JoeDev10/impresiones-parulo/upload/main/js)**
+   (te va a pedir tu usuario de GitHub).
+
+3. **Arrastrá el `datos.js`** que bajaste a esa ventana y abajo apretá el botón
+   verde **Commit changes**.
+
+Esperá un minuto y recargá el sitio. Los cambios ya están online.
+
+> GitHub te va a avisar que el archivo ya existe y lo va a reemplazar. Está bien,
+> es exactamente lo que querés.
 
 Mientras tengas cambios sin publicar, el sitio te muestra un cartelito naranja
 abajo a la izquierda. Ese cartel **solo lo ves vos**.
+
+---
+
+## Si querés tu propio dominio
+
+En vez de `joedev10.github.io/impresiones-parulo` podés tener
+`impresionesparulo.com.ar`. Se compra en NIC Argentina o Namecheap (unos pocos
+dólares al año) y se conecta desde
+*Settings → Pages → Custom domain* en el repo. El hosting sigue siendo gratis.
 
 ---
 
@@ -90,9 +106,16 @@ y vuelve todo como estaba.
 
 ## Cosas que conviene saber
 
-**La clave no es seguridad real.** Sirve para que no entre cualquiera de casualidad,
-pero como el sitio no tiene servidor, alguien que sepa buscar la puede encontrar en
-el código. No guardes nada sensible en el panel.
+**La clave no es seguridad real.** Ahora que el sitio es público, la clave
+`parulo3d` se puede leer en el código. Un desconocido podría entrar al panel.
+
+Pero **no puede hacerte daño**, y vale la pena entender por qué: el panel solo
+escribe en la computadora de quien lo usa. Para cambiar lo que ven tus clientes
+hay que subir el `datos.js` a GitHub, y eso requiere tu cuenta. O sea: alguien
+puede *mirar* el panel, pero no puede tocar tu sitio.
+
+Igual, **no guardes nada sensible ahí** (precios de costo, datos de proveedores,
+teléfonos personales). Todo lo que cargues en el panel y publiques es público.
 
 **Si querés que los cambios se publiquen solos** (sin bajar y subir `datos.js`), eso
 necesita un backend. Se puede agregar después sin rehacer el sitio.
