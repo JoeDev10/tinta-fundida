@@ -5,12 +5,12 @@ No necesita servidor, base de datos ni pagar nada por mes.
 
 ## 🌐 El sitio está online
 
-**https://joedev10.github.io/impresiones-parulo/**
+**https://joedev10.github.io/tinta-fundida/**
 
 Ese es el link para mandar por WhatsApp. Funciona en cualquier celular,
 tiene candadito (HTTPS) y es gratis para siempre.
 
-- Código: https://github.com/JoeDev10/impresiones-parulo
+- Código: https://github.com/JoeDev10/tinta-fundida
 - El panel no tiene link de internet: se abre desde esta computadora (mirá acá abajo).
 
 ---
@@ -19,7 +19,7 @@ tiene candadito (HTTPS) y es gratis para siempre.
 
 **El panel no está en internet, y eso es a propósito.** Vive solo en esta
 computadora, en el archivo `admin.html`. Si alguien prueba entrar a
-`joedev10.github.io/impresiones-parulo/admin.html`, no encuentra nada.
+`joedev10.github.io/tinta-fundida/admin.html`, no encuentra nada.
 
 Para entrar: abrí **`index.html`** (doble click) y bajá hasta el final de la
 página. Abajo a la derecha, al lado del año, hay un **candado 🔒**. Clic ahí y
@@ -92,7 +92,7 @@ vos al instante, pero **tus clientes todavía no**.
 1. Panel → pestaña **Publicar** → botón **Descargar datos.js**
    Se baja un archivo llamado `datos.js` a tu carpeta de Descargas.
 
-2. Entrá a **[la carpeta js/ del repo](https://github.com/JoeDev10/impresiones-parulo/upload/main/js)**
+2. Entrá a **[la carpeta js/ del repo](https://github.com/JoeDev10/tinta-fundida/upload/main/js)**
    (te va a pedir tu usuario de GitHub).
 
 3. **Arrastrá el `datos.js`** que bajaste a esa ventana y abajo apretá el botón
@@ -110,8 +110,8 @@ abajo a la izquierda. Ese cartel **solo lo ves vos**.
 
 ## Si querés tu propio dominio
 
-En vez de `joedev10.github.io/impresiones-parulo` podés tener
-`impresionesparulo.com.ar`. Se compra en NIC Argentina o Namecheap (unos pocos
+En vez de `joedev10.github.io/tinta-fundida` podés tener
+`tintafundida.com.ar`. Se compra en NIC Argentina o Namecheap (unos pocos
 dólares al año) y se conecta desde
 *Settings → Pages → Custom domain* en el repo. El hosting sigue siendo gratis.
 
@@ -181,7 +181,7 @@ workflow; si se agregan pruebas del panel, actualizá los dos.) Son las que abre
 no está en el repo (por eso nadie puede entrar desde internet). En GitHub esas
 aparecen como *salteadas*, no como falladas.
 
-Para correr las 56 necesitás un servidor local (con doble click no funcionan:
+Para correr las 69 necesitás un servidor local (con doble click no funcionan:
 el navegador bloquea que una página lea a otra). En la carpeta del proyecto:
 
 ```bash

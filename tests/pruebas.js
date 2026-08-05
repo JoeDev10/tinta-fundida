@@ -888,7 +888,7 @@
             'return (' + deteccion[1].replace(/^\s*/, '') + ');');
 
           esperar(evaluar({ protocol: 'https:', hostname: 'joedev10.github.io' })).aSerFalso();
-          esperar(evaluar({ protocol: 'https:', hostname: 'impresionesparulo.com.ar' })).aSerFalso();
+          esperar(evaluar({ protocol: 'https:', hostname: 'tintafundida.com.ar' })).aSerFalso();
           esperar(evaluar({ protocol: 'file:',  hostname: '' })).aSerVerdadero();
           esperar(evaluar({ protocol: 'http:',  hostname: 'localhost' })).aSerVerdadero();
           esperar(evaluar({ protocol: 'http:',  hostname: '127.0.0.1' })).aSerVerdadero();
