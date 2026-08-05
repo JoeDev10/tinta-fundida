@@ -1,4 +1,4 @@
-# Impresiones Parulo — sitio web
+# Tinta Fundida — sitio web
 
 Sitio de catálogo con contacto por WhatsApp y panel de administración.
 No necesita servidor, base de datos ni pagar nada por mes.
@@ -10,8 +10,8 @@ No necesita servidor, base de datos ni pagar nada por mes.
 Ese es el link para mandar por WhatsApp. Funciona en cualquier celular,
 tiene candadito (HTTPS) y es gratis para siempre.
 
-- Panel: https://joedev10.github.io/impresiones-parulo/admin.html
 - Código: https://github.com/JoeDev10/impresiones-parulo
+- El panel no tiene link de internet: se abre desde esta computadora (mirá acá abajo).
 
 ---
 
@@ -165,7 +165,7 @@ necesita un backend. Se puede agregar después sin rehacer el sitio.
 
 ## Las pruebas automáticas
 
-El proyecto trae 45 pruebas que abren el sitio y el panel de verdad y los revisan
+El proyecto trae 47 pruebas que abren el sitio y el panel de verdad y los revisan
 solas: que los links de WhatsApp se armen bien, que las fotos se achiquen, que la
 clave no se filtre, que el texto se vea sin scrollear.
 

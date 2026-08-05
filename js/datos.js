@@ -10,8 +10,8 @@ window.DATOS_SITIO = {
   version: 1,
 
   marca: {
-    nombre: "Impresiones Parulo",
-    logo: "PARULO",
+    nombre: "Tinta Fundida",
+    logo: "TINTA FUNDIDA",
     logoSufijo: "3D",
     slogan: "Taller de impresión 3D"
   },
@@ -22,13 +22,13 @@ window.DATOS_SITIO = {
     instagram: "",
     tiktok: "",
     email: "",
-    ciudad: "Buenos Aires, Argentina",
+    ciudad: "Tandil, Buenos Aires",
     horario: "Lun a Sáb · 9 a 19 hs",
     envios: "Envíos a todo el país · Retiro sin cargo"
   },
 
   hero: {
-    kicker: "FDM · PLA · PETG · RESINA",
+    kicker: "PLA · PETG",
     titulo: "IMPRIMIMOS LO QUE IMAGINÁS",
     bajada: "Diseños propios listos para llevar y piezas a medida desde tu archivo o desde una idea escrita en una servilleta.",
     ctaPrimario: "Pedir por WhatsApp",
@@ -36,9 +36,7 @@ window.DATOS_SITIO = {
   },
 
   stats: [
-    { valor: "0.1", unidad: "mm", etiqueta: "Altura de capa" },
     { valor: "48", unidad: "hs", etiqueta: "Entrega promedio" },
-    { valor: "22", unidad: "cm", etiqueta: "Tamaño máximo" },
     { valor: "12", unidad: "+", etiqueta: "Colores en stock" }
   ],
 
@@ -57,15 +55,15 @@ window.DATOS_SITIO = {
     }
   ],
 
-  categorias: ["Deco", "Organización", "Regalos", "Piezas técnicas"],
+  categorias: ["Arte y diseño", "Deco", "Miniaturas", "Juegos y juguetes"],
 
   productos: [
     { id: "p1", nombre: "Maceta geométrica", categoria: "Deco", precio: "$ 8.500", desc: "Facetada, con plato integrado. Tres tamaños disponibles.", imagen: "", visible: true, destacado: true },
-    { id: "p2", nombre: "Organizador de escritorio", categoria: "Organización", precio: "$ 12.000", desc: "Módulos apilables para lapiceras, cables y fichas.", imagen: "", visible: true, destacado: false },
-    { id: "p3", nombre: "Lámpara espiral", categoria: "Deco", precio: "$ 21.000", desc: "Impresa en modo espiral, luz cálida incluida.", imagen: "", visible: true, destacado: true },
-    { id: "p4", nombre: "Llavero personalizado", categoria: "Regalos", precio: "$ 2.800", desc: "Con el nombre, logo o frase que quieras.", imagen: "", visible: true, destacado: false },
-    { id: "p5", nombre: "Soporte para celular", categoria: "Organización", precio: "$ 5.400", desc: "Ángulo regulable, apoyo antideslizante.", imagen: "", visible: true, destacado: false },
-    { id: "p6", nombre: "Engranaje a medida", categoria: "Piezas técnicas", precio: "A cotizar", desc: "Repuestos discontinuados, réplicas y piezas funcionales en PETG.", imagen: "", visible: true, destacado: false }
+    { id: "p2", nombre: "Lámpara espiral", categoria: "Deco", precio: "$ 21.000", desc: "Impresa en modo espiral, luz cálida incluida.", imagen: "", visible: true, destacado: false },
+    { id: "p3", nombre: "Cartel con nombre", categoria: "Arte y diseño", precio: "$ 6.500", desc: "Letras a medida para la puerta, el escritorio o la vidriera.", imagen: "", visible: true, destacado: true },
+    { id: "p4", nombre: "Miniatura para pintar", categoria: "Miniaturas", precio: "$ 3.900", desc: "Escala 28 mm, lista para imprimar y pintar.", imagen: "", visible: true, destacado: false },
+    { id: "p5", nombre: "Dinosaurio articulado", categoria: "Juegos y juguetes", precio: "$ 7.200", desc: "Se mueve entero y sale impreso de una sola pieza.", imagen: "", visible: true, destacado: false },
+    { id: "p6", nombre: "Torre de dados", categoria: "Juegos y juguetes", precio: "$ 9.800", desc: "Para juegos de mesa. Se desarma para guardarla.", imagen: "", visible: true, destacado: false }
   ],
 
   proceso: [
@@ -77,7 +75,7 @@ window.DATOS_SITIO = {
 
   faq: [
     { p: "¿Cuánto tarda un pedido?", r: "Los productos del catálogo salen en 24 a 48 hs. Las piezas a medida dependen del tamaño, pero siempre te confirmo el plazo antes de arrancar." },
-    { p: "¿Qué materiales usan?", r: "PLA para deco y objetos de uso general, PETG cuando la pieza necesita resistencia o va a estar a la intemperie, y resina para piezas con mucho detalle." },
+    { p: "¿Qué materiales usan?", r: "PLA para deco y objetos de uso general, y PETG cuando la pieza necesita resistencia o va a estar a la intemperie." },
     { p: "No tengo el archivo 3D, ¿igual pueden ayudarme?", r: "Sí. Mandame fotos, medidas o un dibujo y lo modelo. El diseño se cotiza aparte y queda tuyo." },
     { p: "¿Hacen cantidad para negocios?", r: "Sí, trabajamos series cortas para comercios y emprendimientos. A partir de 20 unidades hay descuento por volumen." },
     { p: "¿Cómo se paga?", r: "Transferencia, efectivo o link de pago. En pedidos a medida se abona el 50% para empezar." }

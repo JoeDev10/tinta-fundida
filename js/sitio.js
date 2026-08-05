@@ -306,6 +306,51 @@
   $('#pie-slogan').textContent = datos.marca.slogan + '. ' +
     (datos.contacto.envios || '');
 
+  /* redes · solo se dibuja el icono de la red que esté cargada.
+     Si el dueño todavía no puso el usuario de Instagram, no queda
+     un icono muerto que lleve a ninguna parte. */
+  (function () {
+    var usuario = function (v) { return String(v || '').trim().replace(/^@/, ''); };
+    var redes = [];
+
+    var ig = usuario(datos.contacto.instagram);
+    if (ig) redes.push({
+      url: 'https://instagram.com/' + encodeURIComponent(ig),
+      nombre: 'Instagram @' + ig,
+      icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">' +
+             '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.1"/>' +
+             '<circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/></svg>'
+    });
+
+    var tk = usuario(datos.contacto.tiktok);
+    if (tk) redes.push({
+      url: 'https://tiktok.com/@' + encodeURIComponent(tk),
+      nombre: 'TikTok @' + tk,
+      icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">' +
+             '<path d="M14.2 3v11.6a3.4 3.4 0 1 1-2.9-3.4"/><path d="M14.2 3c.3 2.4 1.9 3.9 4.3 4.1"/></svg>'
+    });
+
+    if (String(datos.contacto.whatsapp || '').replace(/\D/g, '')) redes.push({
+      url: linkWhatsapp(),
+      nombre: 'WhatsApp',
+      icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">' +
+             '<path d="M3.2 20.8 4.5 16.6A8.4 8.4 0 1 1 7.7 19.8z"/>' +
+             '<path d="M8.9 8.3c.5 1.7 1.6 3.2 3.1 4.2l1.2-1.1 2.4 1.1c-.3 1.3-1.6 1.9-2.9 1.6a8.6 8.6 0 0 1-5.6-5.6c-.3-1.3.3-2.6 1.6-2.9z"/></svg>'
+    });
+
+    if (datos.contacto.email) redes.push({
+      url: 'mailto:' + datos.contacto.email,
+      nombre: datos.contacto.email,
+      icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">' +
+             '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>'
+    });
+
+    $('#redes').innerHTML = redes.map(function (r) {
+      return '<a class="red" href="' + esc(r.url) + '" target="_blank" rel="noopener" ' +
+             'title="' + esc(r.nombre) + '" aria-label="' + esc(r.nombre) + '">' + r.icono + '</a>';
+    }).join('');
+  })();
+
   var itemsPie = [];
   var num = String(datos.contacto.whatsapp || '').replace(/\D/g, '');
   if (num) itemsPie.push('<li><a href="' + esc(linkWhatsapp()) + '" target="_blank" rel="noopener">WhatsApp +' + esc(num) + '</a></li>');

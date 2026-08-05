@@ -500,8 +500,10 @@ h1,h2,h3,h4{
    STATS
    ============================================================ */
 
+/* auto-fit y no repeat(4): el dueño agrega o saca números desde el
+   panel, así que la fila tiene que repartirse sola para 2, 3 o 4 */
 .stats{
-  display:grid; grid-template-columns:repeat(4,1fr);
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
   border-top:1px solid var(--line); border-bottom:1px solid var(--line);
 }
 @media (max-width:760px){ .stats{ grid-template-columns:repeat(2,1fr); } }
@@ -514,7 +516,8 @@ h1,h2,h3,h4{
 .stat:last-child{ border-right:none; }
 @media (max-width:760px){
   .stat:nth-child(2n){ border-right:none; }
-  .stat:nth-child(-n+2){ border-bottom:1px solid var(--line); }
+  /* separador entre filas, solo si abajo hay otra fila */
+  .stat:nth-child(-n+2):not(:nth-last-child(-n+2)){ border-bottom:1px solid var(--line); }
 }
 .stat::before{
   content:""; position:absolute; inset:auto 0 0 0; height:1px;
@@ -764,6 +767,20 @@ h1,h2,h3,h4{
   text-transform:uppercase; color:var(--txt-dim);
 }
 .pie__barra a:hover{ color:var(--lime); }
+
+/* redes · botonera de iconos bajo el slogan */
+.redes{ display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1.4rem; }
+.red{
+  display:inline-grid; place-items:center;
+  width:42px; height:42px; flex:none;
+  border:1px solid var(--line); color:var(--txt-dim);
+  transition:color .25s, border-color .25s, box-shadow .25s, transform .25s var(--ease);
+}
+.red svg{ width:19px; height:19px; }
+.red:hover, .red:focus-visible{
+  color:var(--lime); border-color:var(--lime); transform:translateY(-2px);
+  box-shadow:0 0 16px rgba(184,255,41,.22); outline:none;
+}
 
 /* candado del panel · discreto pero encontrable si sabés que está */
 .candado{
