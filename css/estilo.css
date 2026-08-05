@@ -544,7 +544,11 @@ h1,h2,h3,h4{
    SERVICIOS
    ============================================================ */
 
-.servicios{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:1.6rem; }
+/* min(320px,100%) y no 320px pelado: en una pantalla de 320px el contenedor
+   mide 278, y una columna de 320 fijos empujaba el sitio hasta hacerlo
+   scrollear para el costado. El min() deja que la columna se achique hasta
+   el ancho disponible cuando no hay lugar. */
+.servicios{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr)); gap:1.6rem; }
 
 .servicio{ padding:2.6rem 2.2rem; }
 .servicio__icono{
@@ -580,8 +584,10 @@ h1,h2,h3,h4{
 .filtro:hover{ color:var(--txt-hi); border-color:var(--line-hot); }
 .filtro.activo{ color:var(--void); background:var(--lime); border-color:var(--lime); }
 
+/* mismo motivo que .servicios: sin el min() las tarjetas se salían 7px del
+   contenedor en pantallas de 320px y quedaban desalineadas con el resto */
 .grilla-productos{
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(285px,1fr)); gap:1.5rem;
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(min(285px,100%),1fr)); gap:1.5rem;
 }
 
 .producto{ display:flex; flex-direction:column; overflow:hidden; }
@@ -833,3 +839,16 @@ h1,h2,h3,h4{
 }
 .aviso-borrador a{ color:var(--txt-hi); border-bottom:1px solid var(--amber); }
 @media (max-width:640px){ .aviso-borrador{ display:none; } }
+
+/* falta el WhatsApp · más fuerte que el de borrador porque el sitio, sin
+   número, no tiene un solo botón para pedir. Va arriba para no taparse
+   con el aviso de borrador, y sí se ve en celular: es demasiado grave. */
+.aviso-falta{
+  position:fixed; left:16px; right:16px; top:86px; z-index:8600;
+  padding:.7rem .9rem; text-align:center;
+  background:var(--surface-2); border:1px solid var(--magenta);
+  font-family:var(--f-mono); font-size:.64rem; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--magenta);
+}
+.aviso-falta a{ color:var(--txt-hi); border-bottom:1px solid var(--magenta); }
+@media (min-width:641px){ .aviso-falta{ left:50%; right:auto; transform:translateX(-50%); } }

@@ -17,7 +17,7 @@ window.DATOS_SITIO = {
   },
 
   contacto: {
-    whatsapp: "5491100000000",
+    whatsapp: "5492494250859",
     mensaje: "Hola! Vi la web y quería hacer una consulta.",
     instagram: "",
     tiktok: "",

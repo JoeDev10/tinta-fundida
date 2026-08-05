@@ -505,6 +505,188 @@
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
+    prueba('REGRESIÓN · el sitio no se scrollea para el costado en ninguna pantalla', function () {
+      /* La grilla de servicios pedía columnas de 320px fijos. En una pantalla
+         de 320px el contenedor mide 278, así que la tarjeta empujaba el sitio
+         hasta hacerlo scrollear para el costado — se medía 336px de contenido
+         en 320 de pantalla. Lo mismo, más chico, con la grilla de productos.
+
+         Se barren varios anchos y no uno solo porque el problema aparecía
+         justo abajo de cierto tamaño y arriba de ese punto no se veía nada. */
+      var ANCHOS = [300, 320, 360, 414, 768, 1280];
+      return ANCHOS.reduce(function (cadena, ancho) {
+        return cadena.then(function () {
+          return abrirPaginaAncho('../index.html', ancho, 900).then(function (f) {
+            var d = f.contentDocument;
+            if (d.documentElement.scrollWidth > ancho + 1) {
+              throw new Error('en ' + ancho + 'px de pantalla el contenido mide ' +
+                              d.documentElement.scrollWidth + 'px: se scrollea para el costado');
+            }
+          });
+        });
+      }, Promise.resolve());
+    });
+
+    prueba('las tarjetas no se salen de la caja del contenido', function () {
+      /* Complemento del anterior: una tarjeta puede pasarse del contenedor
+         sin llegar a generar scroll, y ahí solo se ve desalineada. */
+      return abrirPaginaAncho('../index.html', 320, 900).then(function (f) {
+        var d = f.contentDocument;
+        var caja = d.querySelector('#catalogo .contenedor').getBoundingClientRect();
+        var fuera = Array.prototype.filter.call(d.querySelectorAll('.tarjeta'), function (n) {
+          return n.getBoundingClientRect().right > caja.right + 1;
+        });
+        if (fuera.length) {
+          throw new Error(fuera.length + ' tarjetas se pasan del contenedor, que termina en ' +
+                          Math.round(caja.right) + 'px');
+        }
+      });
+    });
+
+    prueba('REGRESIÓN · sin WhatsApp cargado no queda ningún botón muerto', function () {
+      /* Es el campo más importante del panel y el que más fácil queda vacío.
+         Antes los botones seguían dibujados con href="#": el cliente tocaba
+         "Pedir por WhatsApp" y volvía al principio de la página sin entender
+         nada. Eran 10 botones así. Ahora no se dibuja ninguno. */
+      var c = contenidoBase();
+      c.contacto.whatsapp = '';
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+
+        var muertos = Array.prototype.filter.call(d.querySelectorAll('a'), function (a) {
+          return a.getAttribute('href') === '#';
+        });
+        if (muertos.length) {
+          throw new Error(muertos.length + ' links no llevan a ningún lado: "' +
+                          muertos.map(function (a) { return a.textContent.trim(); }).join('", "') + '"');
+        }
+
+        esperar(d.querySelectorAll('.producto__pedir').length).aSer(0);
+        esperar(!!d.querySelector('#flotante')).aSerFalso();
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('sin WhatsApp el dueño ve un aviso y el catálogo sigue en pie', function () {
+      /* El sitio sin número queda prolijo pero inútil: si no avisara, el
+         dueño no tendría cómo darse cuenta. El aviso se arma desde
+         JavaScript y solo en local, igual que el candado. */
+      var c = contenidoBase();
+      c.contacto.whatsapp = '';
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        var aviso = d.querySelector('.aviso-falta');
+        esperar(!!aviso).aSerVerdadero();
+        esperar(aviso.textContent.toLowerCase()).aContener('whatsapp');
+        /* que el resto del sitio no se caiga por eso */
+        esperar(d.querySelectorAll('.producto').length).aSerMayorQue(0);
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('con WhatsApp cargado no aparece ningún aviso de faltante', function () {
+      return abrirPagina('../index.html').then(function (f) {
+        esperar(!!f.contentDocument.querySelector('.aviso-falta')).aSerFalso();
+        esperar(!!f.contentDocument.querySelector('#flotante')).aSerVerdadero();
+      });
+    });
+
+    prueba('con una sola categoría no se dibuja la barra de filtros', function () {
+      /* Un botón "Todo" solo no filtra nada: es un control que no hace nada. */
+      var c = contenidoBase();
+      c.categorias = ['Deco'];
+      c.productos.forEach(function (p) { p.categoria = 'Deco'; });
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        esperar(d.querySelector('#filtros').hidden).aSerVerdadero();
+        esperar(d.querySelectorAll('.filtro').length).aSer(0);
+        esperar(d.querySelectorAll('.producto').length).aSerMayorQue(0);
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('el acordeón de preguntas abre y cierra', function () {
+      /* Se apaga la transición y se lee grid-template-rows: medir el alto
+         a secas da 0 siempre, porque la animación no avanza si el navegador
+         no está pintando la página. */
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument, w = f.contentWindow;
+        var boton = d.querySelector('.faq__boton');
+        var panel = d.querySelector('.faq__panel');
+        panel.style.transition = 'none';
+
+        esperar(boton.getAttribute('aria-expanded')).aSer('false');
+        esperar(panel.getBoundingClientRect().height).aSer(0);
+
+        boton.click();
+        esperar(boton.getAttribute('aria-expanded')).aSer('true');
+        esperar(panel.getBoundingClientRect().height).aSerMayorQue(10);
+
+        boton.click();
+        esperar(boton.getAttribute('aria-expanded')).aSer('false');
+        esperar(panel.getBoundingClientRect().height).aSer(0);
+      });
+    });
+
+    prueba('el menú de celular abre, cierra y se cierra al elegir', function () {
+      return abrirPaginaAncho('../index.html', 375, 760).then(function (f) {
+        var d = f.contentDocument;
+        var burger = d.querySelector('#burger'), menu = d.querySelector('#menu');
+
+        esperar(burger.getAttribute('aria-expanded')).aSer('false');
+        burger.click();
+        esperar(burger.getAttribute('aria-expanded')).aSer('true');
+        esperar(menu.classList.contains('abierta')).aSerVerdadero();
+
+        /* tocar un link tiene que cerrarlo: si no, tapa la sección a la que
+           acabás de saltar */
+        menu.querySelector('a').click();
+        esperar(menu.classList.contains('abierta')).aSerFalso();
+        esperar(burger.getAttribute('aria-expanded')).aSer('false');
+      });
+    });
+
+    prueba('todos los links del menú llevan a una sección que existe', function () {
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        var rotos = Array.prototype.map.call(d.querySelectorAll('a[href^="#"]'), function (a) {
+          return a.getAttribute('href');
+        }).filter(function (h) {
+          return h !== '#' && !d.querySelector(h);
+        });
+        if (rotos.length) throw new Error('apuntan a la nada: ' + rotos.join(', '));
+      });
+    });
+
+    prueba('la página está bien armada por dentro', function () {
+      /* Chequeos de estructura que se rompen sin hacer ruido: un id repetido
+         hace que el sitio agarre el elemento equivocado, y una foto sin alt
+         deja al lector de pantalla sin nada que decir. */
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+
+        var vistos = {}, repetidos = [];
+        Array.prototype.forEach.call(d.querySelectorAll('[id]'), function (n) {
+          if (vistos[n.id]) repetidos.push(n.id);
+          vistos[n.id] = true;
+        });
+        if (repetidos.length) throw new Error('ids repetidos: ' + repetidos.join(', '));
+
+        esperar(d.querySelectorAll('h1').length).aSer(1);
+        esperar(d.documentElement.lang).aSer('es');
+
+        var sinAlt = Array.prototype.filter.call(d.querySelectorAll('img'), function (i) {
+          return !i.getAttribute('alt');
+        });
+        esperar(sinAlt.length).aSer(0);
+
+        var mudos = Array.prototype.filter.call(d.querySelectorAll('a, button'), function (n) {
+          return !(n.textContent.trim() || n.getAttribute('aria-label') || n.title);
+        });
+        if (mudos.length) throw new Error(mudos.length + ' links o botones sin texto ni etiqueta');
+      });
+    });
+
     prueba('sin Instagram cargado no queda un icono muerto', function () {
       /* Mientras el dueño no ponga su usuario, el icono no tiene que
          existir: un icono que no lleva a ningún lado es peor que ninguno. */

@@ -165,16 +165,19 @@ necesita un backend. Se puede agregar después sin rehacer el sitio.
 
 ## Las pruebas automáticas
 
-El proyecto trae 56 pruebas que abren el sitio y el panel de verdad y los revisan
+El proyecto trae 66 pruebas que abren el sitio y el panel de verdad y los revisan
 solas: que los links de WhatsApp se armen bien, que las fotos se achiquen, que la
 clave no se filtre, que el texto se vea sin scrollear, que el nombre del negocio
-no rompa la barra en celular y que ningún filtro del catálogo quede vacío.
+no rompa la barra en celular, que ningún filtro del catálogo quede vacío, que el
+sitio no se scrollee para el costado en ninguna pantalla y que no quede ningún
+botón que no lleve a ningún lado.
 
-**35 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
+**45 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
 rompe te llega un mail y el commit queda con una cruz roja. No tenés que hacer
 nada para que pase.
 
-**Las otras 21 hay que correrlas acá.** Son las que abren el panel, y el panel
+**Las otras 21 hay que correrlas acá.** (Ojo: el número está en el LEEME y en el
+workflow; si se agregan pruebas del panel, actualizá los dos.) Son las que abren el panel, y el panel
 no está en el repo (por eso nadie puede entrar desde internet). En GitHub esas
 aparecen como *salteadas*, no como falladas.
 

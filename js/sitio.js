@@ -94,6 +94,8 @@
   window.addEventListener('load', revisar);
 
   /* --- WhatsApp -------------------------------------------- */
+  var hayWhatsapp = !!String(datos.contacto.whatsapp || '').replace(/\D/g, '');
+
   function linkWhatsapp(mensaje) {
     var num = String(datos.contacto.whatsapp || '').replace(/\D/g, '');
     var txt = mensaje || datos.contacto.mensaje || 'Hola!';
@@ -198,10 +200,14 @@
       return visibles.some(function (p) { return p.categoria === c; });
     });
 
-    $('#filtros').innerHTML = ['Todo'].concat(usadas).map(function (c, i) {
-      return '<button class="filtro' + (i === 0 ? ' activo' : '') +
-             '" data-cat="' + esc(c) + '" aria-pressed="' + (i === 0) + '">' + esc(c) + '</button>';
-    }).join('');
+    /* con una sola categoría en uso la barra queda con un "Todo" solitario
+       que no filtra nada: mejor no mostrarla */
+    $('#filtros').hidden = usadas.length < 2;
+    $('#filtros').innerHTML = usadas.length < 2 ? '' :
+      ['Todo'].concat(usadas).map(function (c, i) {
+        return '<button class="filtro' + (i === 0 ? ' activo' : '') +
+               '" data-cat="' + esc(c) + '" aria-pressed="' + (i === 0) + '">' + esc(c) + '</button>';
+      }).join('');
 
     pintarProductos('Todo');
 
@@ -249,7 +255,9 @@
           '<p class="producto__desc">' + esc(p.desc) + '</p>' +
           '<div class="producto__pie">' +
             '<span class="producto__precio">' + esc(p.precio || 'Consultar') + '</span>' +
-            '<a class="producto__pedir" href="' + esc(linkWhatsapp(msg)) + '" target="_blank" rel="noopener">Pedir →</a>' +
+            (hayWhatsapp
+              ? '<a class="producto__pedir" href="' + esc(linkWhatsapp(msg)) + '" target="_blank" rel="noopener">Pedir →</a>'
+              : '') +
           '</div>' +
         '</div>' +
       '</article>';
@@ -299,8 +307,16 @@
   $('#cta-texto').textContent = 'Contame qué necesitás y te paso presupuesto sin cargo.' +
     (datos.contacto.horario ? ' ' + datos.contacto.horario + '.' : '');
 
+  /* Sin número cargado, estos botones apuntaban a "#" y el cliente que los
+     tocaba volvía al principio de la página sin entender por qué. Un botón
+     que no está es mejor que uno que miente: se sacan del DOM, así tampoco
+     quedan como paradas del tabulador. El dueño se entera por el aviso de
+     más abajo, que solo se ve en su computadora. */
   ['#cta-nav', '#hero-cta1', '#cta-final', '#flotante'].forEach(function (sel) {
-    $(sel).href = linkWhatsapp();
+    var n = $(sel);
+    if (!n) return;
+    if (hayWhatsapp) n.href = linkWhatsapp();
+    else n.parentNode.removeChild(n);
   });
 
   $('#pie-slogan').textContent = datos.marca.slogan + '. ' +
@@ -378,6 +394,17 @@
     var local = location.protocol === 'file:' ||
                 /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
     if (!local) return;
+
+    /* Sin número no se dibuja ningún botón de WhatsApp, así que desde el
+       sitio no se nota que falta: se ve prolijo y no sirve para nada. Este
+       aviso va acá adentro porque acá ya sabemos que la página corre en la
+       computadora del dueño. El cliente nunca lo ve. */
+    if (!hayWhatsapp) {
+      var falta = el('div', 'aviso-falta');
+      falta.innerHTML = 'Falta cargar el WhatsApp: el sitio está sin ningún ' +
+                        'botón para pedir · <a href="admin.html">Panel</a>';
+      document.body.appendChild(falta);
+    }
 
     var candado = el('a', 'candado');
     candado.href = 'admin.html';
