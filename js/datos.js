@@ -19,7 +19,7 @@ window.DATOS_SITIO = {
   contacto: {
     whatsapp: "5492494250859",
     mensaje: "Hola! Vi la web y quería hacer una consulta.",
-    instagram: "tecnostickers",
+    instagram: "tintafundida",
     tiktok: "",
     email: "",
     ciudad: "Tandil, Buenos Aires",
