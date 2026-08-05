@@ -103,6 +103,38 @@
     return 'https://wa.me/' + num + '?text=' + encodeURIComponent(txt);
   }
 
+  /* --- teléfono legible ------------------------------------ */
+  /* El dueño lo carga pegado y sin símbolos, que es lo más difícil de
+     equivocar. Pero "+5492494250859" de corrido no se lee: esto lo separa
+     solo para mostrarlo. El link se sigue armando con los números pelados.
+
+     Los códigos de área argentinos son de 2 (Buenos Aires), 3 o 4 dígitos.
+     Los de 3 son una lista cerrada, así que alcanza con tenerla: lo que no
+     esté ahí y no empiece con 11 es de 4. */
+  var AREAS_3 = ('220 221 223 230 236 237 249 260 261 263 264 266 280 291 297 299 ' +
+                 '341 342 343 345 348 351 353 358 362 364 370 376 379 380 381 383 ' +
+                 '385 387 388').split(' ');
+
+  function telefonoLegible(valor) {
+    var d = String(valor || '').replace(/\D/g, '');
+    if (!d) return '';
+    if (d.indexOf('54') !== 0) return '+' + d;   /* otro país: se muestra tal cual */
+
+    var resto = d.slice(2);
+    var movil = resto.charAt(0) === '9';
+    if (movil) resto = resto.slice(1);
+    if (resto.length !== 10) return '+' + d;     /* no es un número argentino común */
+
+    var largo = resto.indexOf('11') === 0 ? 2
+              : AREAS_3.indexOf(resto.slice(0, 3)) !== -1 ? 3 : 4;
+    var area = resto.slice(0, largo);
+    var abonado = resto.slice(largo);
+    var corte = abonado.length - 4;
+
+    return '+54 ' + (movil ? '9 ' : '') + area + ' ' +
+           abonado.slice(0, corte) + '-' + abonado.slice(corte);
+  }
+
   /* --- iconos ---------------------------------------------- */
   var ICONOS = {
     caja: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg>',
@@ -369,7 +401,7 @@
 
   var itemsPie = [];
   var num = String(datos.contacto.whatsapp || '').replace(/\D/g, '');
-  if (num) itemsPie.push('<li><a href="' + esc(linkWhatsapp()) + '" target="_blank" rel="noopener">WhatsApp +' + esc(num) + '</a></li>');
+  if (num) itemsPie.push('<li><a href="' + esc(linkWhatsapp()) + '" target="_blank" rel="noopener">WhatsApp ' + esc(telefonoLegible(num)) + '</a></li>');
   if (datos.contacto.email) itemsPie.push('<li><a href="mailto:' + esc(datos.contacto.email) + '">' + esc(datos.contacto.email) + '</a></li>');
   if (datos.contacto.instagram) itemsPie.push('<li><a href="https://instagram.com/' + esc(datos.contacto.instagram.replace('@', '')) + '" target="_blank" rel="noopener">Instagram @' + esc(datos.contacto.instagram.replace('@', '')) + '</a></li>');
   if (datos.contacto.tiktok) itemsPie.push('<li><a href="https://tiktok.com/@' + esc(datos.contacto.tiktok.replace('@', '')) + '" target="_blank" rel="noopener">TikTok @' + esc(datos.contacto.tiktok.replace('@', '')) + '</a></li>');

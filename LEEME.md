@@ -165,14 +165,14 @@ necesita un backend. Se puede agregar después sin rehacer el sitio.
 
 ## Las pruebas automáticas
 
-El proyecto trae 66 pruebas que abren el sitio y el panel de verdad y los revisan
+El proyecto trae 69 pruebas que abren el sitio y el panel de verdad y los revisan
 solas: que los links de WhatsApp se armen bien, que las fotos se achiquen, que la
 clave no se filtre, que el texto se vea sin scrollear, que el nombre del negocio
 no rompa la barra en celular, que ningún filtro del catálogo quede vacío, que el
 sitio no se scrollee para el costado en ninguna pantalla y que no quede ningún
 botón que no lleve a ningún lado.
 
-**45 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
+**48 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
 rompe te llega un mail y el commit queda con una cruz roja. No tenés que hacer
 nada para que pase.
 

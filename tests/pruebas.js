@@ -746,6 +746,91 @@
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
+    prueba('el número de WhatsApp se muestra separado y legible', function () {
+      /* Se guarda pegado porque así es más difícil que el dueño lo escriba
+         mal, pero "+5492494250859" de corrido no lo lee nadie. */
+      function conNumero(numero, esperado) {
+        var c = contenidoBase();
+        c.contacto.whatsapp = numero;
+        sembrar(c);
+        return abrirPagina('../index.html').then(function (f) {
+          var texto = f.contentDocument.querySelector('#pie-contacto').textContent;
+          esperar(texto).aContener(esperado);
+          /* el link, en cambio, va siempre con los números pelados */
+          esperar(f.contentDocument.querySelector('#flotante').href)
+            .aContener('wa.me/' + numero.replace(/\D/g, ''));
+        });
+      }
+      return conNumero('5492494250859', '+54 9 249 425-0859')   /* Tandil, área de 3 */
+        .then(function () { return conNumero('5491122334455', '+54 9 11 2233-4455'); })
+        .then(function () { return conNumero('542664250859',  '+54 266 425-0859'); })
+        .then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('REGRESIÓN · en celular el cubo usa las medidas chicas', function () {
+      /* Las reglas de celular del cubo estaban escritas antes que las de
+         escritorio en la hoja de estilos. Pesan igual, así que ganaba la
+         última: el cubo nunca se achicaba y todo ese bloque era letra
+         muerta. Se mide el valor que el navegador termina aplicando. */
+      return abrirPaginaAncho('../index.html', 375, 760).then(function (f) {
+        var w = f.contentWindow;
+        var cubo = w.getComputedStyle(f.contentDocument.querySelector('.cubo')).width;
+        if (cubo !== '130px') {
+          throw new Error('en celular el cubo mide ' + cubo + ' y tendría que medir 130px: ' +
+                          'las reglas de pantalla chica no le están llegando');
+        }
+      }).then(function () {
+        return abrirPaginaAncho('../index.html', 1280, 900).then(function (f) {
+          esperar(f.contentWindow.getComputedStyle(
+            f.contentDocument.querySelector('.cubo')).width).aSer('190px');
+        });
+      });
+    });
+
+    prueba('la pieza se imprime de abajo hacia arriba y el cabezal la sigue', function () {
+      /* La animación se muestrea parándola en distintos momentos, que es la
+         única forma de medirla: una transición no avanza sola si el
+         navegador no está pintando la página.
+
+         Que el cabezal acompañe importa más que la pieza en sí: si van
+         cada uno por su lado, se ve una línea barriendo al pedo. */
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        var pared = d.querySelector('.pieza__pared');
+        var cabezal = d.querySelector('.escena__cabezal');
+        esperar(d.querySelectorAll('.pieza__pared').length).aSer(4);
+
+        if (!pared.getAnimations) return;   /* navegador viejo: no se mide */
+
+        var anims = [].concat(pared.getAnimations(), cabezal.getAnimations());
+        esperar(anims.length).aSerMayorQue(1);
+        anims.forEach(function (a) { a.pause(); });
+
+        function alto(ms) {
+          anims.forEach(function (a) { a.currentTime = ms; });
+          return {
+            pieza: pared.getBoundingClientRect().height,
+            cabezal: cabezal.getBoundingClientRect().top
+          };
+        }
+
+        var arranque = alto(450), mitad = alto(3150), fin = alto(6300);
+
+        if (!(arranque.pieza < mitad.pieza && mitad.pieza < fin.pieza)) {
+          throw new Error('la pieza no crece: ' + [arranque.pieza, mitad.pieza, fin.pieza].join(' → '));
+        }
+        /* el cabezal sube, o sea que su posición en pantalla baja de valor */
+        if (!(arranque.cabezal > mitad.cabezal && mitad.cabezal > fin.cabezal)) {
+          throw new Error('el cabezal no acompaña a la pieza: ' +
+                          [arranque.cabezal, mitad.cabezal, fin.cabezal].map(Math.round).join(' → '));
+        }
+
+        /* y al terminar la vuelta arranca de nuevo desde abajo */
+        var reinicio = alto(8990);
+        esperar(reinicio.pieza).aSerMenorQue(arranque.pieza + 1);
+      });
+    });
+
     prueba('el nombre de la marca queda en el título de la pestaña y en el pie', function () {
       /* Cuando se cambia el nombre del negocio es fácil que quede el viejo
          escondido en algún lado. Esto lo agarra. */

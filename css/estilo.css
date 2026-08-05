@@ -422,27 +422,6 @@ h1,h2,h3,h4{
   min-height:380px;
 }
 
-/* En pantallas chicas el texto va primero: si el cubo encabeza,
-   el título y el botón de WhatsApp caen debajo del fold. */
-@media (max-width:980px){
-  .escena{ min-height:260px; margin-top:1rem; }
-  .cubo{ width:130px; height:130px; }
-  .cubo__cara:nth-child(1){ transform:translateZ(65px); }
-  .cubo__cara:nth-child(2){ transform:rotateY(180deg) translateZ(65px); }
-  .cubo__cara:nth-child(3){ transform:rotateY(90deg) translateZ(65px); }
-  .cubo__cara:nth-child(4){ transform:rotateY(-90deg) translateZ(65px); }
-  .cubo__cara:nth-child(5){ transform:rotateX(90deg) translateZ(65px); }
-  .cubo__cara:nth-child(6){ transform:rotateX(-90deg) translateZ(65px); }
-  .escena__base{ width:190px; height:190px; transform:rotateX(74deg) translateZ(-92px); background-size:19px 19px; }
-  .escena__aro{ width:205px; height:205px; }
-  .escena__cabezal{ width:205px; }
-  @keyframes barrido{
-    0%,100%{ transform:translateY(-65px); opacity:0; }
-    10%{ opacity:1; } 90%{ opacity:1; }
-    50%{ transform:translateY(65px); }
-  }
-}
-
 .cubo{
   width:190px; height:190px; position:relative;
   transform-style:preserve-3d;
@@ -469,6 +448,67 @@ h1,h2,h3,h4{
 .cubo__cara:nth-child(5){ transform:rotateX(90deg) translateZ(95px);  border-color:rgba(255,45,111,.4); }
 .cubo__cara:nth-child(6){ transform:rotateX(-90deg) translateZ(95px); border-color:rgba(255,45,111,.4); }
 
+/* ── la pieza que se está imprimiendo ──────────────────────────
+   Cuatro paredes verticales que crecen en altura desde la base del
+   cubo, más una placa horizontal que sube marcando la capa que se
+   está depositando.
+
+   Crecen por `height` y no por scaleY a propósito: el rayado que
+   simula las capas es un gradiente repetido, y al escalar se
+   estiraría junto con la pared —las capas se irían haciendo más
+   gordas—. Creciendo en alto, el paso del rayado queda fijo y las
+   capas se van sumando de a una, que es lo que hace un impresora.
+
+   Las cinco partes comparten duración y curva, así que arrancan y
+   terminan juntas y el bucle cierra sin saltos. El cabezal de más
+   abajo va con la misma duración para quedar siempre en el borde
+   de lo que se está imprimiendo. */
+.pieza{
+  position:absolute; left:50%; bottom:0; width:0; height:0;
+  transform-style:preserve-3d;
+}
+.pieza__pared{
+  position:absolute; bottom:0; left:0; width:62px; margin-left:-31px;
+  transform-origin:50% 100%;
+  border:1px solid rgba(184,255,41,.6);
+  background:
+    repeating-linear-gradient(to bottom,
+      rgba(184,255,41,.30) 0px, rgba(184,255,41,.30) 1px,
+      rgba(184,255,41,.06) 1px, rgba(184,255,41,.06) 4px);
+  box-shadow:0 0 14px rgba(184,255,41,.18);
+  animation:imprimir-pared 9s ease-in-out infinite;
+}
+.pieza__pared:nth-child(1){ transform:rotateY(0deg)   translateZ(31px); }
+.pieza__pared:nth-child(2){ transform:rotateY(90deg)  translateZ(31px); }
+.pieza__pared:nth-child(3){ transform:rotateY(180deg) translateZ(31px); }
+.pieza__pared:nth-child(4){ transform:rotateY(270deg) translateZ(31px); }
+
+.pieza__capa{
+  position:absolute; bottom:0; left:0;
+  width:62px; height:62px; margin-left:-31px; margin-bottom:-31px;
+  border:1px solid var(--lime);
+  background:rgba(184,255,41,.18);
+  box-shadow:0 0 20px rgba(184,255,41,.55);
+  animation:imprimir-capa 9s ease-in-out infinite;
+}
+
+@keyframes imprimir-pared{
+  0%   { height:0;     opacity:0; }
+  5%   { height:4px;   opacity:1; }
+  70%  { height:110px; opacity:1; }
+  88%  { height:110px; opacity:1; }
+  97%  { height:110px; opacity:0; }
+  100% { height:0;     opacity:0; }
+}
+@keyframes imprimir-capa{
+  0%   { transform:rotateX(90deg) translateZ(0);      opacity:0; }
+  5%   { transform:rotateX(90deg) translateZ(4px);    opacity:1; }
+  70%  { transform:rotateX(90deg) translateZ(110px);  opacity:1; }
+  88%  { transform:rotateX(90deg) translateZ(110px);  opacity:.35; }
+  97%  { transform:rotateX(90deg) translateZ(110px);  opacity:0; }
+  100% { transform:rotateX(90deg) translateZ(0);      opacity:0; }
+}
+
 /* cama de impresión */
 .escena__base{
   position:absolute; width:280px; height:280px;
@@ -491,13 +531,71 @@ h1,h2,h3,h4{
   position:absolute; width:300px; height:2px;
   background:linear-gradient(90deg, transparent, var(--lime), transparent);
   box-shadow:0 0 18px rgba(184,255,41,.8);
-  animation:barrido 4.5s ease-in-out infinite;
+  animation:barrido 9s ease-in-out infinite;
 }
+/* misma duración y misma curva que la pieza: así el cabezal queda
+   siempre a la altura de la última capa y no barriendo por su cuenta */
 @keyframes barrido{
-  0%,100%{ transform:translateY(-95px); opacity:0; }
-  10%{ opacity:1; }
-  90%{ opacity:1; }
-  50%{ transform:translateY(95px); }
+  0%   { transform:translateY(95px);  opacity:0; }
+  5%   { transform:translateY(91px);  opacity:1; }
+  70%  { transform:translateY(-15px); opacity:1; }
+  88%  { transform:translateY(-15px); opacity:1; }
+  97%  { transform:translateY(-15px); opacity:0; }
+  100% { transform:translateY(95px);  opacity:0; }
+}
+
+/* ── la escena, en pantallas chicas ────────────────────────────
+   En celular el texto va primero: si el cubo encabeza, el título y
+   el botón de WhatsApp caen debajo del fold.
+
+   Este bloque va acá abajo y no arriba de la sección por un motivo
+   concreto: `.cubo{width:130px}` y `.cubo{width:190px}` pesan igual,
+   así que gana la que se escribe última. Estaba escrito antes de las
+   reglas de escritorio y el cubo nunca se achicaba en celular —las
+   medidas de acá adentro no hacían nada. Si se mueven para arriba,
+   vuelve el problema. */
+@media (max-width:980px){
+  .escena{ min-height:260px; margin-top:1rem; }
+  .cubo{ width:130px; height:130px; }
+  .cubo__cara:nth-child(1){ transform:translateZ(65px); }
+  .cubo__cara:nth-child(2){ transform:rotateY(180deg) translateZ(65px); }
+  .cubo__cara:nth-child(3){ transform:rotateY(90deg) translateZ(65px); }
+  .cubo__cara:nth-child(4){ transform:rotateY(-90deg) translateZ(65px); }
+  .cubo__cara:nth-child(5){ transform:rotateX(90deg) translateZ(65px); }
+  .cubo__cara:nth-child(6){ transform:rotateX(-90deg) translateZ(65px); }
+  .escena__base{ width:190px; height:190px; transform:rotateX(74deg) translateZ(-92px); background-size:19px 19px; }
+  .escena__aro{ width:205px; height:205px; }
+  .escena__cabezal{ width:205px; }
+
+  /* la pieza se achica con el cubo, manteniendo la proporción */
+  .pieza__pared{ width:44px; margin-left:-22px; }
+  .pieza__pared:nth-child(1){ transform:rotateY(0deg)   translateZ(22px); }
+  .pieza__pared:nth-child(2){ transform:rotateY(90deg)  translateZ(22px); }
+  .pieza__pared:nth-child(3){ transform:rotateY(180deg) translateZ(22px); }
+  .pieza__pared:nth-child(4){ transform:rotateY(270deg) translateZ(22px); }
+  .pieza__capa{ width:44px; height:44px; margin-left:-22px; margin-bottom:-22px; }
+
+  @keyframes imprimir-pared{
+    0%{ height:0; opacity:0; } 5%{ height:3px; opacity:1; }
+    70%{ height:75px; opacity:1; } 88%{ height:75px; opacity:1; }
+    97%{ height:75px; opacity:0; } 100%{ height:0; opacity:0; }
+  }
+  @keyframes imprimir-capa{
+    0%{ transform:rotateX(90deg) translateZ(0); opacity:0; }
+    5%{ transform:rotateX(90deg) translateZ(3px); opacity:1; }
+    70%{ transform:rotateX(90deg) translateZ(75px); opacity:1; }
+    88%{ transform:rotateX(90deg) translateZ(75px); opacity:.35; }
+    97%{ transform:rotateX(90deg) translateZ(75px); opacity:0; }
+    100%{ transform:rotateX(90deg) translateZ(0); opacity:0; }
+  }
+  @keyframes barrido{
+    0%{ transform:translateY(65px); opacity:0; }
+    5%{ transform:translateY(62px); opacity:1; }
+    70%{ transform:translateY(-10px); opacity:1; }
+    88%{ transform:translateY(-10px); opacity:1; }
+    97%{ transform:translateY(-10px); opacity:0; }
+    100%{ transform:translateY(65px); opacity:0; }
+  }
 }
 
 /* ============================================================
