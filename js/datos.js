@@ -1,9 +1,8 @@
 /* ============================================================
    DATOS DEL SITIO  ·  contenido publicado
    ------------------------------------------------------------
-   Este archivo lo genera el panel de administración.
-   No hace falta editarlo a mano: entrá a admin.html,
-   hacé los cambios y apretá "Publicar".
+   Archivo generado. No editar a mano: se reemplaza entero
+   cada vez que se publica.
    ============================================================ */
 
 window.DATOS_SITIO = {
