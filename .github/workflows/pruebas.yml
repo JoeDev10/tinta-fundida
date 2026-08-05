@@ -1,7 +1,7 @@
 # Corre las pruebas en cada push. Si algo se rompe, GitHub manda un mail y
 # el commit queda marcado con una cruz roja en la lista de commits.
 #
-# Las 21 pruebas del panel se saltean acá: abren admin.html, que no está en
+# Las 23 pruebas del panel se saltean acá: abren admin.html, que no está en
 # el repo a propósito. Esas hay que correrlas en la computadora del dueño,
 # entrando a http://localhost:5173/tests/ antes de publicar.
 

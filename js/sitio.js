@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var CLAVE_LS = 'parulo:contenido';
+  var CLAVE_LS = 'tinta-fundida:contenido';
 
   /* --- carga de contenido ---------------------------------- */
   /* Si hay un borrador guardado en esta computadora, se muestra

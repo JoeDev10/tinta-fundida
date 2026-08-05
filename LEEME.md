@@ -165,7 +165,7 @@ necesita un backend. Se puede agregar después sin rehacer el sitio.
 
 ## Las pruebas automáticas
 
-El proyecto trae 69 pruebas que abren el sitio y el panel de verdad y los revisan
+El proyecto trae 71 pruebas que abren el sitio y el panel de verdad y los revisan
 solas: que los links de WhatsApp se armen bien, que las fotos se achiquen, que la
 clave no se filtre, que el texto se vea sin scrollear, que el nombre del negocio
 no rompa la barra en celular, que ningún filtro del catálogo quede vacío, que el
@@ -176,12 +176,12 @@ botón que no lleve a ningún lado.
 rompe te llega un mail y el commit queda con una cruz roja. No tenés que hacer
 nada para que pase.
 
-**Las otras 21 hay que correrlas acá.** (Ojo: el número está en el LEEME y en el
+**Las otras 23 hay que correrlas acá.** (Ojo: el número está en el LEEME y en el
 workflow; si se agregan pruebas del panel, actualizá los dos.) Son las que abren el panel, y el panel
 no está en el repo (por eso nadie puede entrar desde internet). En GitHub esas
 aparecen como *salteadas*, no como falladas.
 
-Para correr las 69 necesitás un servidor local (con doble click no funcionan:
+Para correr las 71 necesitás un servidor local (con doble click no funcionan:
 el navegador bloquea que una página lea a otra). En la carpeta del proyecto:
 
 ```bash

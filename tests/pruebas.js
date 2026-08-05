@@ -8,8 +8,8 @@
 (function () {
   'use strict';
 
-  var LS_CONTENIDO = 'parulo:contenido';
-  var LS_SESION    = 'parulo:sesion';
+  var LS_CONTENIDO = 'tinta-fundida:contenido';
+  var LS_SESION    = 'tinta-fundida:sesion';
 
   /* ==========================================================
      MINI FRAMEWORK
@@ -950,6 +950,44 @@
         esperar(f.contentWindow.CLAVE_ADMIN.length).aSerMayorQue(7);
         esperar(JSON.stringify(f.contentWindow.DATOS_SITIO)).aNoContener(f.contentWindow.CLAVE_ADMIN);
       });
+    });
+
+    prueba('SEGURIDAD · el panel no tiene ninguna clave de respaldo escrita adentro', function () {
+      /* Había una: si js/clave.js faltaba, el panel abría igual con una
+         palabra fija que además salía del nombre del negocio. Ahora sin
+         ese archivo no se entra. Se lee el fuente porque la alternativa
+         —cargar el panel sin clave.js— no se puede armar desde acá. */
+      return fetch('../js/admin.js').then(function (r) { return r.text(); })
+        .then(function (fuente) {
+          var respaldo = fuente.match(/CLAVE_ADMIN\s*\|\|\s*['"][^'"]+['"]/);
+          if (respaldo) {
+            throw new Error('quedó una clave de respaldo en el código: ' + respaldo[0]);
+          }
+        });
+    });
+
+    prueba('SEGURIDAD · sin js/clave.js no queda ninguna clave con la que entrar', function () {
+      /* El panel decide la clave una sola vez, al cargar, así que no se
+         puede sacar después desde el iframe. Se saca la línea del fuente
+         y se evalúa con un window sin CLAVE_ADMIN, que es exactamente la
+         situación de alguien que borró el archivo. Mismo truco que usa la
+         prueba del candado.
+
+         Lo que importa es que no quede ninguna clave válida: si esto
+         diera un texto, esa palabra abriría el panel. */
+      return fetch('../js/admin.js').then(function (r) { return r.text(); })
+        .then(function (fuente) {
+          var linea = fuente.match(/var claveAdmin = ([\s\S]*?);\n/);
+          esperar(!!linea).aSerVerdadero();
+
+          var evaluar = new Function('window', 'return (' + linea[1].trim() + ');');
+
+          esperar(evaluar({})).aSer(null);                       /* clave.js borrado */
+          esperar(evaluar({ CLAVE_ADMIN: '' })).aSer(null);      /* archivo vacío */
+          esperar(evaluar({ CLAVE_ADMIN: undefined })).aSer(null);
+          /* y con el archivo en su lugar, la clave sale de ahí */
+          esperar(evaluar({ CLAVE_ADMIN: 'Molde-X' })).aSer('Molde-X');
+        });
     });
 
     prueba('lista los productos que existen', function () {
