@@ -21,8 +21,14 @@ tiene candadito (HTTPS) y es gratis para siempre.
 computadora, en el archivo `admin.html`. Si alguien prueba entrar a
 `joedev10.github.io/impresiones-parulo/admin.html`, no encuentra nada.
 
-Para abrirlo: doble click en **`admin.html`**.
-Para ver el sitio: doble click en **`index.html`**.
+Para entrar: abrí **`index.html`** (doble click) y bajá hasta el final de la
+página. Abajo a la derecha, al lado del año, hay un **candado 🔒**. Clic ahí y
+entrás al panel.
+
+Ese candado **solo aparece en tu computadora**. En el sitio publicado no existe:
+si abrís joedev10.github.io y bajás al pie, no hay ningún candado que encontrar.
+
+También podés entrar directo con doble click en `admin.html`.
 
 > **Clave: `Molde-Filamento47_A822`**
 > Está guardada en `js/clave.js`. Para cambiarla, abrí ese archivo con el Bloc

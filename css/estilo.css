@@ -765,6 +765,20 @@ h1,h2,h3,h4{
 }
 .pie__barra a:hover{ color:var(--lime); }
 
+/* candado del panel · discreto pero encontrable si sabés que está */
+.candado{
+  display:inline-grid; place-items:center;
+  width:30px; height:30px; flex:none;
+  border:1px solid var(--line);
+  color:var(--txt-dim); opacity:.4;
+  transition:opacity .25s var(--ease), color .25s, border-color .25s, box-shadow .25s;
+}
+.candado svg{ width:14px; height:14px; }
+.candado:hover, .candado:focus-visible{
+  opacity:1; color:var(--lime); border-color:var(--lime);
+  box-shadow:0 0 14px rgba(184,255,41,.25); outline:none;
+}
+
 /* ============================================================
    BOTÓN FLOTANTE WHATSAPP
    ============================================================ */

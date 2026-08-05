@@ -320,6 +320,34 @@
   $('#pie-hecho').textContent = datos.contacto.ciudad || '';
 
   /* ==========================================================
+     CANDADO DEL PANEL
+     Atajo discreto al panel, abajo a la derecha.
+
+     Se arma desde acá y no desde el HTML a propósito: así el
+     index.html que se sube al hosting no menciona el panel en
+     ningún lado. Solo aparece cuando la página corre en la
+     computadora del dueño (archivo local o servidor local),
+     que es donde el panel existe.
+     ========================================================== */
+  (function () {
+    var local = location.protocol === 'file:' ||
+                /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    if (!local) return;
+
+    var candado = el('a', 'candado');
+    candado.href = 'admin.html';
+    candado.title = 'Panel de administración';
+    candado.setAttribute('aria-label', 'Panel de administración');
+    candado.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">' +
+      '<rect x="4" y="10" width="16" height="11" rx="1.5"/>' +
+      '<path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3"/></svg>';
+
+    var barra = $('.pie__barra');
+    if (barra) barra.appendChild(candado);
+  })();
+
+  /* ==========================================================
      INTERACCIONES
      ========================================================== */
 
