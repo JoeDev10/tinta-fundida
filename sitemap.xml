@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  El mapa del sitio. Hoy tiene una sola dirección porque el sitio es
+  una sola página: las secciones (catálogo, preguntas, contacto) son
+  anclas de esa misma página, y las anclas no se listan acá.
+
+  Si algún día se agregan páginas de verdad, se suman como <url>.
+  No lleva <lastmod> a propósito: una fecha que nadie va a acordarse
+  de actualizar le miente a Google, y Google la termina ignorando.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://joedev10.github.io/tinta-fundida/</loc>
+  </url>
+</urlset>

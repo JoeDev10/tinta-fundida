@@ -413,6 +413,83 @@
   $('#pie-hecho').textContent = datos.contacto.ciudad || '';
 
   /* ==========================================================
+     FICHA PARA GOOGLE (JSON-LD)
+     Le dice a Google qué es esto: un negocio local, dónde queda,
+     a qué hora atiende y cómo se lo contacta. Es lo que puede
+     terminar mostrándose como ficha al costado de los resultados.
+
+     Se arma acá y no a mano en el HTML porque los datos son del
+     dueño: si mañana cambia el horario o el WhatsApp desde el
+     panel, la ficha se actualiza sola. Google ejecuta JavaScript
+     cuando indexa, así que la lee igual.
+
+     Cada campo se agrega solo si hay con qué llenarlo. Una ficha
+     a medias es normal; una ficha que miente es peor que nada.
+     ========================================================== */
+  (function () {
+    var ficha = {
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
+      name: datos.marca.nombre,
+      description: datos.marca.slogan,
+      url: location.origin + location.pathname.replace(/index\.html$/, ''),
+      image: new URL('imagenes/compartir.png', location.href).href
+    };
+
+    if (num) ficha.telephone = '+' + num;
+
+    /* "Tandil, Buenos Aires" → ciudad y provincia por separado */
+    if (datos.contacto.ciudad) {
+      var partes = datos.contacto.ciudad.split(',');
+      ficha.address = { '@type': 'PostalAddress', addressCountry: 'AR' };
+      ficha.address.addressLocality = partes[0].trim();
+      if (partes[1]) ficha.address.addressRegion = partes[1].trim();
+    }
+
+    /* El horario lo escribe el dueño libre ("Lun a Sáb · 9 a 19 hs"),
+       porque obligarlo a un formato sería pedirle que piense como una
+       computadora. Acá se intenta traducir al formato que espera
+       Google, y si el texto no encaja se omite el campo: prefiero una
+       ficha sin horario a una con el horario equivocado. */
+    (function () {
+      var DIAS = { lun: 'Mo', mar: 'Tu', mie: 'We', mié: 'We', jue: 'Th',
+                   vie: 'Fr', sab: 'Sa', sáb: 'Sa', dom: 'Su' };
+      var t = datos.contacto.horario || '';
+      var dias = t.toLowerCase().match(/(lun|mar|mié|mie|jue|vie|sáb|sab|dom)\w*\s+a\s+(lun|mar|mié|mie|jue|vie|sáb|sab|dom)\w*/);
+      var horas = t.match(/(\d{1,2})(?::(\d{2}))?\s*a\s*(\d{1,2})(?::(\d{2}))?\s*h/i);
+      if (!dias || !horas) return;
+
+      /* Un horario cortado al mediodía ("9 a 13 y 16 a 20 hs") tiene dos
+         franjas y acá arriba solo entra una: publicaríamos la tarde y nos
+         comeríamos la mañana. Si hay más de un tramo, no es que no se
+         entienda: es que no entra en una línea. Mejor no decir nada. */
+      if ((t.match(/\d{1,2}\s*(?::\d{2}\s*)?a\s*\d{1,2}/g) || []).length > 1) return;
+
+      var dd = DIAS[dias[1]] + '-' + DIAS[dias[2]];
+      var pad = function (h, m) {
+        return ('0' + h).slice(-2) + ':' + (m || '00');
+      };
+      ficha.openingHours = dd + ' ' + pad(horas[1], horas[2]) + '-' + pad(horas[3], horas[4]);
+    })();
+
+    var perfiles = [];
+    var ig = String(datos.contacto.instagram || '').trim().replace(/^@/, '');
+    var tk = String(datos.contacto.tiktok || '').trim().replace(/^@/, '');
+    if (ig) perfiles.push('https://instagram.com/' + encodeURIComponent(ig));
+    if (tk) perfiles.push('https://tiktok.com/@' + encodeURIComponent(tk));
+    if (perfiles.length) ficha.sameAs = perfiles;
+
+    if (datos.contacto.email) ficha.email = datos.contacto.email;
+
+    var s = document.createElement('script');
+    s.type = 'application/ld+json';
+    /* un "</script>" escondido en el nombre del negocio cerraría la
+       etiqueta antes de tiempo: escapamos el < y deja de poder pasar */
+    s.textContent = JSON.stringify(ficha, null, 2).replace(/</g, '\\u003c');
+    document.head.appendChild(s);
+  })();
+
+  /* ==========================================================
      CANDADO DEL PANEL
      Atajo discreto al panel, abajo a la derecha.
 

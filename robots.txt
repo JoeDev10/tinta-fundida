@@ -1,0 +1,13 @@
+# Tinta Fundida · qué puede mirar Google
+#
+# El sitio entero es público y queremos que se indexe: por eso el
+# Allow vacío, que en este archivo quiere decir "pasá por donde
+# quieras". Lo único que dejamos afuera es la carpeta de pruebas:
+# está en el repo, GitHub Pages la publica igual, y no tiene nada
+# que un cliente quiera encontrar buscando en Google.
+
+User-agent: *
+Disallow: /tests/
+Allow: /
+
+Sitemap: https://joedev10.github.io/tinta-fundida/sitemap.xml

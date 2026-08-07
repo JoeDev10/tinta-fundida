@@ -922,6 +922,203 @@
   });
 
   /* ==========================================================
+     COMPARTIR Y BUSCADORES
+     Lo que pasa cuando el sitio se ve desde afuera: pegado en un
+     chat, rastreado por Google o abierto en una dirección que no
+     existe. Nada de esto se nota mirando la página, así que si se
+     rompe no hay quien lo vea. De ahí que estén estas pruebas.
+     ========================================================== */
+  grupo('Compartir y buscadores', function () {
+
+    function fichaDe(f) {
+      var n = f.contentDocument.querySelector('script[type="application/ld+json"]');
+      if (!n) throw new Error('no se armó la ficha de Google');
+      return JSON.parse(n.textContent);
+    }
+
+    prueba('el link pegado en un chat muestra miniatura, título y bajada', function () {
+      /* Sin estas cuatro etiquetas WhatsApp muestra la dirección pelada.
+         Es la diferencia entre un link que invita y uno que da desconfianza. */
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        ['og:title', 'og:description', 'og:image', 'og:url'].forEach(function (p) {
+          var m = d.querySelector('meta[property="' + p + '"]');
+          if (!m || !m.content.trim()) throw new Error('falta ' + p);
+        });
+        esperar(d.querySelector('meta[name="twitter:card"]').content).aSer('summary_large_image');
+
+        /* Quien lee esto entra de afuera: una ruta relativa no le sirve */
+        var img = d.querySelector('meta[property="og:image"]').content;
+        esperar(img.indexOf('https://')).aSer(0);
+        esperar(img).aContener('imagenes/compartir.png');
+      });
+    });
+
+    prueba('la imagen de compartir existe y mide lo que espera WhatsApp', function () {
+      /* 1200x630 es la medida que las apps recortan sin deformar. Si
+         alguien la reemplaza por una foto del celular, esto avisa. */
+      return new Promise(function (res, rej) {
+        var img = new Image();
+        img.onload = function () { res(img); };
+        img.onerror = function () { rej(new Error('no se pudo cargar imagenes/compartir.png')); };
+        img.src = '../imagenes/compartir.png?t=' + Date.now();
+      }).then(function (img) {
+        esperar(img.naturalWidth).aSer(1200);
+        esperar(img.naturalHeight).aSer(630);
+      });
+    });
+
+    prueba('REGRESIÓN · el título de compartir no se despega de datos.js', function () {
+      /* Estas etiquetas están escritas a mano en el HTML porque WhatsApp
+         no ejecuta JavaScript. El precio de eso es que no se enteran de
+         un cambio de nombre — y la marca ya se renombró una vez. Esta
+         prueba es la que se entera por ellas. */
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        var nombre = window.DATOS_SITIO.marca.nombre;
+
+        esperar(d.querySelector('meta[property="og:title"]').content).aContener(nombre);
+        esperar(d.querySelector('meta[property="og:site_name"]').content).aSer(nombre);
+        esperar(d.querySelector('meta[property="og:image:alt"]').content).aContener(nombre);
+        esperar(d.title).aContener(nombre);
+
+        /* la bajada de compartir y la que ve Google tienen que ser la misma */
+        esperar(d.querySelector('meta[property="og:description"]').content)
+          .aSer(d.querySelector('meta[name="description"]').content);
+      });
+    });
+
+    prueba('la ficha de Google se arma con los datos del dueño', function () {
+      limpiar();
+      return abrirPagina('../index.html').then(function (f) {
+        var ficha = fichaDe(f);
+        var c = window.DATOS_SITIO.contacto;
+
+        esperar(ficha['@type']).aSer('LocalBusiness');
+        esperar(ficha.name).aSer(window.DATOS_SITIO.marca.nombre);
+        esperar(ficha.telephone).aSer('+' + String(c.whatsapp).replace(/\D/g, ''));
+        esperar(ficha.address.addressLocality).aSer(c.ciudad.split(',')[0].trim());
+        esperar(ficha.address.addressCountry).aSer('AR');
+        esperar(ficha.image).aContener('imagenes/compartir.png');
+      });
+    });
+
+    prueba('el horario escrito a mano se traduce al formato de Google', function () {
+      var c = contenidoBase();
+      c.contacto.horario = 'Lun a Sáb · 9 a 19 hs';
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        esperar(fichaDe(f).openingHours).aSer('Mo-Sa 09:00-19:00');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('un horario que no se entiende se omite en vez de inventarse', function () {
+      /* Tres formas de escribirlo que el traductor no cubre. En ninguna
+         puede quedar un horario a medias: o sale bien o no sale. */
+      var casos = ['a convenir', 'Lun a Vie · 9 a 13 y 16 a 20 hs', 'todos los días'];
+      return casos.reduce(function (cadena, texto) {
+        return cadena.then(function () {
+          var c = contenidoBase();
+          c.contacto.horario = texto;
+          sembrar(c);
+          return abrirPagina('../index.html').then(function (f) {
+            var ficha = fichaDe(f);
+            if ('openingHours' in ficha) {
+              throw new Error('con "' + texto + '" publicó ' + ficha.openingHours);
+            }
+          });
+        });
+      }, Promise.resolve()).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('lo que el dueño no cargó no aparece en la ficha', function () {
+      var c = contenidoBase();
+      c.contacto.instagram = '';
+      c.contacto.tiktok = '';
+      c.contacto.email = '';
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        var ficha = fichaDe(f);
+        esperar('sameAs' in ficha).aSerFalso();
+        esperar('email' in ficha).aSerFalso();
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('SEGURIDAD · el nombre del negocio no puede romper la ficha', function () {
+      /* La ficha es JSON metido dentro de una etiqueta <script>. Un
+         "</script>" en el nombre la cerraría antes de tiempo y lo que
+         viniera después lo ejecutaría el navegador. */
+      var veneno = 'Taller </script><img src=x onerror="window.__roto=1">';
+      var c = contenidoBase();
+      c.marca.nombre = veneno;
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        esperar(fichaDe(f).name).aSer(veneno);
+        esperar(d.head.querySelectorAll('img').length).aSer(0);
+        esperar(f.contentWindow.__roto).aSer(undefined);
+
+        var crudo = d.querySelector('script[type="application/ld+json"]').textContent;
+        esperar(crudo).aNoContener('</script>');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('las direcciones escritas a mano apuntan todas al mismo lugar', function () {
+      /* La dirección del sitio está repetida en seis lugares. El día que
+         se compre un dominio propio se cambian los seis, y si se olvida
+         uno el sitio queda diciendo dos cosas distintas: Google se queda
+         con la vieja y la miniatura del chat deja de cargar. */
+      var texto = function (u) { return fetch(u).then(function (r) { return r.text(); }); };
+      return Promise.all([
+        abrirPagina('../index.html'),
+        texto('../robots.txt'),
+        texto('../sitemap.xml'),
+        texto('../404.html')
+      ]).then(function (r) {
+        var d = r[0].contentDocument;
+        var canonica = d.querySelector('link[rel="canonical"]').getAttribute('href');
+
+        esperar(canonica.indexOf('https://')).aSer(0);
+        esperar(d.querySelector('meta[property="og:url"]').content).aSer(canonica);
+        esperar(d.querySelector('meta[property="og:image"]').content).aContener(canonica);
+        esperar(r[1]).aContener(canonica + 'sitemap.xml');
+        esperar(r[2]).aContener('<loc>' + canonica + '</loc>');
+        esperar(r[3]).aContener(canonica);
+      });
+    });
+
+    prueba('robots.txt deja pasar el sitio y esconde las pruebas', function () {
+      /* La carpeta tests/ se publica junto con el resto (está en el repo
+         y GitHub Pages sirve todo). No es secreta, pero no tiene por qué
+         aparecer cuando alguien busca el negocio. */
+      return fetch('../robots.txt').then(function (r) { return r.text(); })
+        .then(function (t) {
+          esperar(t).aContener('Disallow: /tests/');
+          esperar(t).aContener('Sitemap:');
+          esperar(t).aNoContener('Disallow: /\n');
+        });
+    });
+
+    prueba('la página 404 tiene salida y no se indexa', function () {
+      /* Aparece en cualquier dirección inventada, así que no puede
+         depender de css/estilo.css: desde /una/ruta/rara las rutas
+         relativas apuntan a cualquier lado y quedaría sin diseño. */
+      return abrirPagina('../404.html').then(function (f) {
+        var d = f.contentDocument;
+        esperar(d.querySelector('meta[name="robots"]').content).aContener('noindex');
+        esperar(d.body.textContent).aContener('404');
+
+        var salida = d.querySelector('a[href^="https://"]');
+        esperar(!!salida).aSerVerdadero();
+        esperar(salida.textContent.trim().length).aSerMayorQue(0);
+
+        var afuera = d.querySelectorAll('link[rel="stylesheet"], script[src]');
+        if (afuera.length) throw new Error('la 404 depende de ' + afuera.length + ' archivo(s) de afuera');
+      });
+    });
+  });
+
+  /* ==========================================================
      PANEL
      ========================================================== */
   grupo('Panel', function () {

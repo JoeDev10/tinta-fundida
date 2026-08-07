@@ -108,12 +108,44 @@ abajo a la izquierda. Ese cartel **solo lo ves vos**.
 
 ---
 
+## Cuando alguien comparte el link
+
+Si pegás el link del sitio en un chat de WhatsApp, en la bio de Instagram o en
+Facebook, no aparece la dirección pelada: aparece una **miniatura** con el cubo,
+el nombre del negocio y la ciudad. Eso ya está armado y no tenés que hacer nada.
+
+La imagen es `imagenes/compartir.png`. Si algún día cambia el nombre del negocio
+hay que rehacerla —eso lo hace quien toca el código, con un comando— porque el
+nombre está dibujado adentro de la imagen.
+
+> WhatsApp se guarda la miniatura por un rato. Si la cambiás y seguís viendo la
+> vieja, es eso: no está roto, hay que esperar.
+
+**Google.** El sitio ya le dice a Google que es un negocio local de Tandil, con
+el horario y el teléfono que cargaste en el panel. Si mañana cambiás el horario,
+eso se actualiza solo.
+
+Ahora, siendo honesto: para que te encuentren buscando *"impresión 3D Tandil"*,
+lo que más sirve **no es el sitio** sino darte de alta en el **Perfil de Empresa
+de Google** (buscá "Google Business Profile"). Es gratis, lo hacés vos en media
+hora, y es lo que hace que aparezcas en el mapa. El sitio ayuda; el perfil es el
+que mueve la aguja.
+
+---
+
 ## Si querés tu propio dominio
 
 En vez de `joedev10.github.io/tinta-fundida` podés tener
 `tintafundida.com.ar`. Se compra en NIC Argentina o Namecheap (unos pocos
 dólares al año) y se conecta desde
 *Settings → Pages → Custom domain* en el repo. El hosting sigue siendo gratis.
+
+El SEO **no depende de tener dominio propio** — el sitio de ahora rankea igual.
+El dominio propio suma en confianza y queda mejor en una tarjeta.
+
+> Para quien toque el código: la dirección está escrita entera en seis lugares
+> (tres en `index.html`, una en `robots.txt`, una en `sitemap.xml` y el botón de
+> `404.html`). Hay una prueba que falla si quedan diciendo cosas distintas.
 
 ---
 
@@ -165,14 +197,15 @@ necesita un backend. Se puede agregar después sin rehacer el sitio.
 
 ## Las pruebas automáticas
 
-El proyecto trae 71 pruebas que abren el sitio y el panel de verdad y los revisan
+El proyecto trae 82 pruebas que abren el sitio y el panel de verdad y los revisan
 solas: que los links de WhatsApp se armen bien, que las fotos se achiquen, que la
 clave no se filtre, que el texto se vea sin scrollear, que el nombre del negocio
 no rompa la barra en celular, que ningún filtro del catálogo quede vacío, que el
-sitio no se scrollee para el costado en ninguna pantalla y que no quede ningún
-botón que no lleve a ningún lado.
+sitio no se scrollee para el costado en ninguna pantalla, que no quede ningún
+botón que no lleve a ningún lado y que la miniatura que sale al compartir el link
+siga diciendo el nombre correcto.
 
-**48 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
+**59 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
 rompe te llega un mail y el commit queda con una cruz roja. No tenés que hacer
 nada para que pase.
 
@@ -181,7 +214,7 @@ workflow; si se agregan pruebas del panel, actualizá los dos.) Son las que abre
 no está en el repo (por eso nadie puede entrar desde internet). En GitHub esas
 aparecen como *salteadas*, no como falladas.
 
-Para correr las 71 necesitás un servidor local (con doble click no funcionan:
+Para correr las 82 necesitás un servidor local (con doble click no funcionan:
 el navegador bloquea que una página lea a otra). En la carpeta del proyecto:
 
 ```bash
@@ -209,6 +242,10 @@ impresion 3D/
 ├── css/estilo.css      diseño del sitio
 ├── js/sitio.js         arma el sitio
 ├── js/datos.js         ← TU CONTENIDO (el que se reemplaza al publicar)
+├── 404.html            si alguien entra a una dirección que no existe
+├── imagenes/           la miniatura que sale al compartir el link
+├── robots.txt          qué puede mirar Google
+├── sitemap.xml         el mapa del sitio, para Google
 │
 ├── ── NO SE PUBLICA (solo en esta compu) ──────
 ├── admin.html          el panel de administración
@@ -218,7 +255,7 @@ impresion 3D/
 │
 ├── ── ANDAMIAJE (está en el repo, no toca el sitio) ──
 ├── tests/              las pruebas automáticas
-├── scripts/            las corre sin abrir ventana
+├── scripts/            las corre sin abrir ventana, y dibuja la miniatura
 ├── .github/workflows/  hace que GitHub las corra en cada push
 ├── package.json        de qué dependen las pruebas
 └── LEEME.md            esto que estás leyendo
