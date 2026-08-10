@@ -232,7 +232,11 @@
   <span>Consultar</span>
 </a>
 
+<!-- datos.js es la red de seguridad y va primero: si todo lo demás
+     falla, el sitio se pinta igual con esto. contenido.js decide si
+     hay algo más fresco en la nube y recién ahí carga sitio.js. -->
 <script src="js/datos.js"></script>
-<script src="js/sitio.js"></script>
+<script src="js/nube.js"></script>
+<script src="js/contenido.js"></script>
 </body>
 </html>

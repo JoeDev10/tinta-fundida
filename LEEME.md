@@ -1,54 +1,57 @@
 # Tinta Fundida — sitio web
 
 Sitio de catálogo con contacto por WhatsApp y panel de administración.
-No necesita servidor, base de datos ni pagar nada por mes.
+Se edita desde el celular y lo que guardás sale publicado solo.
 
-## 🌐 El sitio está online
+## 🌐 Las dos direcciones
 
-**https://joedev10.github.io/tinta-fundida/**
+**El sitio** · https://joedev10.github.io/tinta-fundida/
+Ese es el link para mandar por WhatsApp o poner en la bio de Instagram.
 
-Ese es el link para mandar por WhatsApp. Funciona en cualquier celular,
-tiene candadito (HTTPS) y es gratis para siempre.
+**El panel** · https://joedev10.github.io/tinta-fundida/admin.html
+Ahí entrás vos con tu mail y tu contraseña. Guardalo en favoritos.
 
-- Código: https://github.com/JoeDev10/tinta-fundida
-- El panel no tiene link de internet: se abre desde esta computadora (mirá acá abajo).
+Código: https://github.com/JoeDev10/tinta-fundida
 
 ---
 
 ## Cómo entro al panel
 
-**El panel no está en internet, y eso es a propósito.** Vive solo en esta
-computadora, en el archivo `admin.html`. Si alguien prueba entrar a
-`joedev10.github.io/tinta-fundida/admin.html`, no encuentra nada.
+Abrís **joedev10.github.io/tinta-fundida/admin.html** y ponés tu mail y tu
+contraseña. Listo. Desde la computadora, desde el celular, desde donde estés.
 
-Para entrar: abrí **`index.html`** (doble click) y bajá hasta el final de la
-página. Abajo a la derecha, al lado del año, hay un **candado 🔒**. Clic ahí y
-entrás al panel.
+También llegás desde el sitio: bajá hasta el final y tocá el **candado 🔒** que
+está al lado del año.
 
-Ese candado **solo aparece en tu computadora**. En el sitio publicado no existe:
-si abrís joedev10.github.io y bajás al pie, no hay ningún candado que encontrar.
+> **Sí, el panel está en internet, y está bien.** La contraseña la revisa el
+> servidor y nunca baja al teléfono de quien entra: no hay ningún archivo donde
+> ir a espiarla. Además de saber la contraseña hay que estar en la lista de
+> personas autorizadas, así que si un desconocido se registra por su cuenta no
+> puede tocar nada.
 
-También podés entrar directo con doble click en `admin.html`.
+El panel te deja entrado para no pedirte la clave cada vez. Si entraste desde un
+teléfono prestado, andá a **Copias y cuenta → Cerrar sesión** antes de devolverlo.
 
-> **Clave: `Molde-Filamento47_A822`**
-> Está guardada en `js/clave.js`. Para cambiarla, abrí ese archivo con el Bloc
-> de notas, cambiá el texto entre comillas y guardá.
-
-Conviene anotarla en el celular o en un papel. Si la perdés, se recupera
-abriendo `js/clave.js`.
+**Si te olvidás la contraseña**, escribile a quien te armó el sitio: se
+restablece desde el panel de Supabase en dos minutos.
 
 ---
 
 ## Cómo cargo mis cosas
 
-1. Abrí `admin.html` y entrá con la clave.
+1. Entrá al panel.
 2. **Marca y contacto** → poné el número de WhatsApp. Es lo más importante:
    sin eso, ningún botón del sitio funciona.
    - Va con código de país, sin `+`, sin espacios y **sin el 15**.
    - Ejemplo: si tu número es 11 2233-4455 → escribís `5491122334455`
    - Apretá *Probar el link* para confirmar que abre tu chat.
 3. **Catálogo** → cargá tus piezas (mirá abajo, es lo más rápido).
-4. Lo que editás se guarda solo. Mirá el punto verde arriba a la derecha.
+4. Listo. **No hay botón de publicar**: lo que escribís se guarda solo y desde
+   ese momento lo ven tus clientes.
+
+Mirá el **punto verde** arriba a la derecha. Mientras diga *Guardado*, no te
+falta ningún paso. Si se pone naranja está guardando; si aparece un cartel rojo,
+algo no salió y te dice qué.
 
 Cada producto tiene su propio botón que abre WhatsApp con el nombre de la pieza
 ya escrito, así el cliente no tiene que explicar qué quiere.
@@ -76,35 +79,37 @@ directamente encima de la tarjeta.
 Pasá el mouse por la tarjeta y apretá **Quitar**. Un click, sin preguntas.
 La foto se va y el producto queda igual.
 
-Todo esto se guarda solo. No hay que apretar ningún "guardar".
+Las fotos se achican solas a 1100px antes de subirse, así que no importa si
+vienen del celular: una de 3 MB queda en unos 150 KB. No hace falta que las
+edites antes.
+
+**El espacio ya no es un problema.** Antes había un tope de 5 MB para todo
+—unas 25 fotos— porque las fotos vivían adentro del navegador. Ahora van al
+servidor, donde hay 1 GB: son miles.
+
+**Consejo:** las fotos venden más que el texto. Fondo liso, luz de día, la pieza
+sola y centrada. Con el celular alcanza.
 
 ---
 
-## Cómo publico los cambios
+## ¿Y publicar?
 
-Esto es lo único que tiene un paso extra, así que leelo con atención.
+**Ya no existe ese paso.** Guardar es publicar.
 
-Cuando editás en el panel, los cambios se guardan **en tu computadora**. Los ves
-vos al instante, pero **tus clientes todavía no**.
+Antes tenías que bajar un archivo `datos.js` y subirlo a GitHub cada vez. Eso se
+terminó: ahora el panel escribe directo en el servidor y el sitio lo lee de ahí.
+Cargás una foto desde el celular y en treinta segundos está online.
 
-### Los 3 pasos
+---
 
-1. Panel → pestaña **Publicar** → botón **Descargar datos.js**
-   Se baja un archivo llamado `datos.js` a tu carpeta de Descargas.
+## Copias de seguridad
 
-2. Entrá a **[la carpeta js/ del repo](https://github.com/JoeDev10/tinta-fundida/upload/main/js)**
-   (te va a pedir tu usuario de GitHub).
+En *Copias y cuenta → Descargar copia* bajás un archivo con **todo** tu
+contenido. Guardalo en el Drive cada tanto.
 
-3. **Arrastrá el `datos.js`** que bajaste a esa ventana y abajo apretá el botón
-   verde **Commit changes**.
-
-Esperá un minuto y recargá el sitio. Los cambios ya están online.
-
-> GitHub te va a avisar que el archivo ya existe y lo va a reemplazar. Está bien,
-> es exactamente lo que querés.
-
-Mientras tengas cambios sin publicar, el sitio te muestra un cartelito naranja
-abajo a la izquierda. Ese cartel **solo lo ves vos**.
+Es tu marcha atrás, y ahora importa más que antes: como lo que guardás se
+publica solo, si borrás algo sin querer ya salió al aire. Con *Restaurar copia*
+vuelve todo como estaba.
 
 ---
 
@@ -149,73 +154,79 @@ El dominio propio suma en confianza y queda mejor en una tarjeta.
 
 ---
 
-## Las fotos
-
-- Se achican solas al subirlas (a 1100px), así que no importa si vienen del celular.
-- Una foto de 3 MB queda en unos 150 KB. No hace falta que las edites antes.
-- El espacio total es de unos **5 MB**, que alcanza para 25–30 fotos.
-- En *Publicar → Espacio usado* ves cuánto llevás.
-
-**Consejo:** las fotos venden más que el texto. Fondo liso, luz de día, la pieza
-sola y centrada. Con el celular alcanza.
-
----
-
-## Copias de seguridad
-
-En *Publicar → Copia de seguridad* podés bajar un archivo con **todo** tu contenido
-y tus fotos. Guardalo cada tanto en el Drive o donde quieras.
-
-Si cambiás de computadora, formateás, o borrás algo sin querer: *Restaurar copia*
-y vuelve todo como estaba.
-
-> Si limpiás los datos del navegador se borra lo que no publicaste.
-> Tené siempre una copia bajada.
-
----
-
 ## Cosas que conviene saber
 
-**El panel no se publica nunca.** Los archivos `admin.html`, `js/admin.js`,
-`css/admin.css` y `js/clave.js` están en el `.gitignore`: no viajan a internet.
-Por eso tu clave es una clave de verdad y no un adorno — no hay forma de que un
-desconocido la lea, porque el archivo no existe en el servidor.
+**El sitio no se cae aunque el servidor se caiga.** Si el servicio tiene un mal
+día o se corta internet a mitad de camino, el catálogo se sigue viendo: hay una
+copia de respaldo adentro del propio sitio. Lo peor que pasa es que se vea la
+última versión guardada en esa copia, nunca una pantalla en blanco.
 
-**Todo lo que publicás es público.** Lo que cargues en el catálogo y subas con
-`datos.js` lo puede leer cualquiera. No pongas ahí precios de costo, datos de
-proveedores ni teléfonos personales.
+**No edites desde dos lados a la vez.** Si tocás lo mismo desde la computadora y
+desde el celular al mismo tiempo, gana el último que guarda. Con una persona
+editando esto no pasa nunca.
 
-**Si querés editar desde otra computadora o desde el celular,** hoy no se puede:
-el panel está atado a esta máquina. Se resuelve con un backend (fase 2), o
-copiando la carpeta entera a la otra computadora y restaurando una copia de
-seguridad.
+**Todo lo que cargás es público.** Lo que va al catálogo lo puede leer cualquiera.
+No pongas ahí precios de costo, datos de proveedores ni teléfonos personales.
 
-**Si querés que los cambios se publiquen solos** (sin bajar y subir `datos.js`), eso
-necesita un backend. Se puede agregar después sin rehacer el sitio.
+---
+
+## Para quien toca el código
+
+**Qué hay atrás.** Un proyecto de Supabase (plan gratuito) con:
+
+- tabla `contenido` — una sola fila, `id = 1`, con todo el sitio adentro
+- tabla `editores` — quién puede escribir; estar logueado no alcanza
+- bucket `fotos` — público para leer, con sesión para escribir
+
+Las credenciales están en `js/nube.js` y **se publican a propósito**: la clave de
+ahí es la *publicable*, cuyo trabajo es viajar al navegador. Lo que protege el
+sitio no es esconderla, son las políticas de la base. Nunca pongas ahí la
+`service_role`.
+
+**Dar de alta a alguien:** crear el usuario en *Authentication* y agregarlo a
+`editores`. Sin lo segundo entra al panel y no puede guardar nada — el panel se
+lo dice con todas las letras en vez de fingir que guardó.
+
+**El proyecto gratuito se pausa** si nadie lo usa por una semana. Mientras el
+sitio reciba visitas no pasa; si llegara a pausarse, el sitio se sigue viendo con
+la red de seguridad y hay que despertarlo desde el dashboard de Supabase.
+
+**La red de seguridad es `js/datos.js`**, y no se actualiza sola. Cada tanto
+conviene bajarla desde *Copias y cuenta → Descargar datos.js* y reemplazar la
+del repo, para que ese respaldo no quede viejo.
+
+**`js/clave.js` quedó sin uso** desde que la contraseña la verifica el servidor.
+Sigue en el `.gitignore` porque todavía tiene una clave escrita adentro. Se puede
+borrar tranquilo.
+
+**Falta:** `js/nube-panel.js` —el que habla con el servidor— no tiene pruebas
+propias; las del panel le ponen adelante una nube de mentira. Y el panel no tiene
+"olvidé mi contraseña": hoy se resuelve desde el dashboard.
 
 ---
 
 ## Las pruebas automáticas
 
-El proyecto trae 82 pruebas que abren el sitio y el panel de verdad y los revisan
-solas: que los links de WhatsApp se armen bien, que las fotos se achiquen, que la
-clave no se filtre, que el texto se vea sin scrollear, que el nombre del negocio
-no rompa la barra en celular, que ningún filtro del catálogo quede vacío, que el
-sitio no se scrollee para el costado en ninguna pantalla, que no quede ningún
-botón que no lleve a ningún lado y que la miniatura que sale al compartir el link
-siga diciendo el nombre correcto.
+El proyecto trae **86 pruebas** que abren el sitio y el panel de verdad y los
+revisan solas: que los links de WhatsApp se armen bien, que las fotos se
+achiquen, que ninguna contraseña quede escrita en el código, que el texto se vea
+sin scrollear, que el nombre del negocio no rompa la barra en celular, que ningún
+filtro del catálogo quede vacío, que el sitio no se scrollee para el costado en
+ninguna pantalla, que no quede ningún botón que no lleve a ningún lado y que la
+miniatura que sale al compartir el link siga diciendo el nombre correcto.
 
-**59 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
+**Las 86 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
 rompe te llega un mail y el commit queda con una cruz roja. No tenés que hacer
 nada para que pase.
 
-**Las otras 23 hay que correrlas acá.** (Ojo: el número está en el LEEME y en el
-workflow; si se agregan pruebas del panel, actualizá los dos.) Son las que abren el panel, y el panel
-no está en el repo (por eso nadie puede entrar desde internet). En GitHub esas
-aparecen como *salteadas*, no como falladas.
+> Antes 23 de estas se salteaban porque el panel no estaba en el repo. Desde que
+> el panel se publica junto con el sitio, no queda nada afuera. (El número está
+> escrito acá, en el workflow y en `tests/pruebas.js`: si agregás pruebas,
+> actualizá los tres.)
 
-Para correr las 82 necesitás un servidor local (con doble click no funcionan:
-el navegador bloquea que una página lea a otra). En la carpeta del proyecto:
+Para correrlas en tu computadora necesitás un servidor local (con doble click no
+funcionan: el navegador bloquea que una página lea a otra). En la carpeta del
+proyecto:
 
 ```bash
 python -m http.server 5173
@@ -223,12 +234,10 @@ python -m http.server 5173
 
 Y entrás a **http://localhost:5173/tests/** → botón *Correr las pruebas*.
 
-Corré esto **antes de publicar** cada vez que se toque el código. Si algo se
-rompió, te lo dice en rojo y con el motivo.
+Corré esto **antes de subir** cada vez que se toque el código.
 
-> Para quien toque el código: `npm test` hace lo mismo desde la terminal, sin
-> abrir ninguna ventana. La primera vez pide `npm install` y
-> `npx playwright install chromium`.
+> `npm test` hace lo mismo desde la terminal, sin abrir ninguna ventana. La
+> primera vez pide `npm install` y `npx playwright install chromium`.
 
 ---
 
@@ -237,23 +246,25 @@ rompió, te lo dice en rojo y con el motivo.
 ```
 impresion 3D/
 │
-├── ── SE PUBLICA ──────────────────────────────
+├── ── EL SITIO ────────────────────────────────
 ├── index.html          el sitio que ven tus clientes
 ├── css/estilo.css      diseño del sitio
 ├── js/sitio.js         arma el sitio
-├── js/datos.js         ← TU CONTENIDO (el que se reemplaza al publicar)
+├── js/contenido.js     decide de dónde salen los datos (nube → local → datos.js)
+├── js/datos.js         la red de seguridad, si el servidor no contesta
 ├── 404.html            si alguien entra a una dirección que no existe
 ├── imagenes/           la miniatura que sale al compartir el link
 ├── robots.txt          qué puede mirar Google
 ├── sitemap.xml         el mapa del sitio, para Google
 │
-├── ── NO SE PUBLICA (solo en esta compu) ──────
+├── ── EL PANEL (también se publica) ───────────
 ├── admin.html          el panel de administración
 ├── css/admin.css       diseño del panel
 ├── js/admin.js         hace funcionar el panel
-├── js/clave.js         ← TU CLAVE
+├── js/nube.js          la dirección del servidor y la clave publicable
+├── js/nube-panel.js    entrar, guardar y subir fotos
 │
-├── ── ANDAMIAJE (está en el repo, no toca el sitio) ──
+├── ── ANDAMIAJE (no toca el sitio) ────────────
 ├── tests/              las pruebas automáticas
 ├── scripts/            las corre sin abrir ventana, y dibuja la miniatura
 ├── .github/workflows/  hace que GitHub las corra en cada push
@@ -261,5 +272,4 @@ impresion 3D/
 └── LEEME.md            esto que estás leyendo
 ```
 
-El único archivo que vas a tocar es **`js/datos.js`**, y ni siquiera a mano:
-lo genera el panel por vos.
+Ya no hay ningún archivo que tengas que tocar a mano. El panel se encarga.

@@ -1,16 +1,24 @@
-# ── El panel NO se publica ──────────────────────────────────
-# Vive solo en la computadora del dueño. Si no está en el
-# servidor, nadie puede entrar aunque adivine la dirección.
-admin.html
-css/admin.css
-js/admin.js
+# ── El panel AHORA SÍ se publica ────────────────────────────
+# Antes admin.html, admin.css y admin.js estaban acá afuera, y era
+# la única razón por la que la clave servía de algo: estaba escrita
+# en un archivo, y lo único que la protegía era que ese archivo no
+# existiera en el servidor.
+#
+# Ya no. La contraseña la verifica Supabase y nunca baja al
+# navegador, y además hay que estar en la lista de editores. Por eso
+# el panel puede estar en internet: es lo que le permite al dueño
+# entrar desde el celular.
+
+# ── Lo que NO se publica ────────────────────────────────────
+# clave.js quedó sin uso: ningún archivo lo carga. Sigue ignorado
+# a propósito, porque adentro todavía hay una contraseña escrita y
+# ahora el resto de esta carpeta sí viaja al servidor. Se puede
+# borrar tranquilo.
 js/clave.js
 
 # Las pruebas SÍ van al repo: son las que corren solas en cada push.
-# Como GitHub Pages sirve todo lo que está en el repo, la carpeta tests/
-# también queda publicada. No es un problema —no hay nada secreto ahí—
-# pero por eso el panel sigue afuera: si admin.html entrara acá, quedaría
-# vivo en internet, y ahí sí la clave dejaría de servir de algo.
+# Como GitHub Pages sirve todo lo que está en el repo, la carpeta
+# tests/ también queda publicada. No hay nada secreto ahí.
 
 # herramientas locales
 .claude/

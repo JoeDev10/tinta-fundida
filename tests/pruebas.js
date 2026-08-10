@@ -20,12 +20,15 @@
   function grupo(nombre, fn) { grupoActual = nombre; fn(); }
   function prueba(nombre, fn) { suite.push({ grupo: grupoActual, nombre: nombre, fn: fn }); }
 
-  /* Estos tres grupos abren admin.html, y el panel existe solo en la
-     computadora del dueño: en el repo no está, a propósito. Cuando las
-     pruebas corren en GitHub esas se saltean en vez de fallar — una falla
-     ahí significaría "el sitio está roto" y no lo estaría. Por eso el
-     LEEME insiste con correrlas también acá antes de publicar. */
-  var GRUPOS_CON_PANEL = ['Panel', 'Fotos', 'Publicar'];
+  /* Estos tres grupos abren admin.html. Desde que el panel se publica
+     junto con el sitio, siempre está: los 86 corren en todos lados y
+     no se saltea nada.
+
+     El mecanismo queda igual, y no por nostalgia: si alguna vez el
+     panel vuelve a quedar afuera del repo, estas pruebas se saltean
+     en vez de fallar. Una falla ahí diría "el sitio está roto" y el
+     sitio estaría perfecto. */
+  var GRUPOS_CON_PANEL = ['Panel', 'Fotos', 'Copias'];
 
   function hayPanel() {
     return fetch('../admin.html', { method: 'HEAD' })
@@ -71,13 +74,33 @@
      ========================================================== */
   var marcosAbiertos = [];
 
+  /* sitio.js ya no lo carga el HTML: lo carga contenido.js cuando
+     terminó de decidir de dónde salen los datos. Un script agregado
+     así no retrasa el onload del iframe, o sea que cuando onload
+     dispara la página puede estar todavía sin pintar. Esperar 90 ms
+     y cruzar los dedos alcanzaba antes y ahora no: se espera hasta
+     ver la marca puesta, que es lo primero que escribe sitio.js. */
+  function esperarPintado(f, res, rej, url) {
+    var limite = Date.now() + 6000;
+    (function mirar() {
+      var d = f.contentDocument;
+      var pintado = d && d.querySelector('#logo-nav') &&
+                    d.querySelector('#logo-nav').textContent.trim();
+      /* 404.html no tiene logo ni sitio.js: con que exista el body alcanza */
+      var sinSitio = d && !d.querySelector('#logo-nav') && d.body;
+      if (pintado || sinSitio) return res(f);
+      if (Date.now() > limite) return rej(new Error('nunca se pintó: ' + url));
+      setTimeout(mirar, 20);
+    })();
+  }
+
   function abrirPagina(url) {
     return new Promise(function (res, rej) {
       var f = document.createElement('iframe');
       f.style.cssText = 'position:absolute;left:-10000px;top:0;width:1280px;height:900px;border:0';
       f.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'test=' + Date.now();
       var listo = false;
-      f.onload = function () { listo = true; setTimeout(function () { res(f); }, 90); };
+      f.onload = function () { listo = true; esperarPintado(f, res, rej, url); };
       f.onerror = function () { rej(new Error('no cargó ' + url)); };
       setTimeout(function () { if (!listo) rej(new Error('tardó demasiado: ' + url)); }, 8000);
       document.body.appendChild(f);
@@ -94,7 +117,7 @@
       f.style.cssText = 'position:absolute;left:-10000px;top:0;border:0;width:' +
                         ancho + 'px;height:' + alto + 'px';
       f.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'test=' + Date.now();
-      f.onload = function () { setTimeout(function () { res(f); }, 120); };
+      f.onload = function () { esperarPintado(f, res, rej, url); };
       f.onerror = function () { rej(new Error('no cargó ' + url)); };
       setTimeout(function () { rej(new Error('tardó demasiado: ' + url)); }, 8000);
       document.body.appendChild(f);
@@ -164,12 +187,80 @@
   }
 
   /* entra al panel y devuelve su window */
+  /* ==========================================================
+     LA NUBE DE MENTIRA
+     ------------------------------------------------------------
+     El panel ya no compara una clave escrita en un archivo: se la
+     pide a un servidor. Estas pruebas son sobre la lógica del
+     panel —que el formulario guarde, que la foto se achique, que
+     el catálogo se reordene— y no sobre el viaje por la red.
+
+     Así que se le pone adelante un NUBE_PANEL falso. admin.js lo
+     busca en window en el momento de usarlo, no al arrancar, y por
+     eso alcanza con reemplazarlo después de que cargó la página y
+     antes de apretar Entrar. El panel no se entera de nada.
+
+     Ojo con lo que esto NO cubre: nada de js/nube-panel.js, que es
+     el que habla con el servidor de verdad. Eso todavía está probado
+     a mano y le falta su propio grupo de pruebas.
+     ========================================================== */
+  function nubeFalsa() {
+    var guardado;
+    try {
+      var s = localStorage.getItem(LS_CONTENIDO);
+      guardado = s ? JSON.parse(s) : null;
+    } catch (e) { guardado = null; }
+    if (!guardado) guardado = JSON.parse(JSON.stringify(window.DATOS_SITIO));
+
+    return {
+      hayNube: function () { return true; },
+      sesion:  function () { return { mail: 'prueba@local' }; },
+      entrar:  function () { return Promise.resolve({ mail: 'prueba@local' }); },
+      salir:   function () { return Promise.resolve(); },
+      traerContenido:   function () { return Promise.resolve(guardado); },
+      guardarContenido: function (d) {
+        guardado = JSON.parse(JSON.stringify(d));
+        return Promise.resolve(guardado);
+      },
+      /* Devuelve la foto ya procesada como dataURL en vez de subirla.
+         Así las pruebas de fotos pueden seguir midiendo el ancho y el
+         peso de lo que salió de procesarImagen, que es lo que les
+         importa: que el achicado funcione. */
+      subirFoto: function (blob) {
+        return new Promise(function (res, rej) {
+          var fr = new FileReader();
+          fr.onload  = function () { res(fr.result); };
+          fr.onerror = function () { rej(new Error('no se pudo leer el blob')); };
+          fr.readAsDataURL(blob);
+        });
+      },
+      borrarFoto: function () { return Promise.resolve(); }
+    };
+  }
+
   function abrirPanel() {
     return abrirPagina('../admin.html').then(function (f) {
       var w = f.contentWindow, d = f.contentDocument;
-      d.querySelector('#clave').value = w.CLAVE_ADMIN;
+      w.NUBE_PANEL = nubeFalsa();
+      d.querySelector('#mail').value  = 'prueba@local';
+      d.querySelector('#clave').value = 'lo-que-sea';
       d.querySelector('#form-acceso').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-      return { marco: f, win: w, doc: d };
+
+      /* entrar ahora pasa por una promesa (va a buscar el contenido),
+         así que hay que esperar a que el panel esté realmente abierto */
+      return new Promise(function (res, rej) {
+        var limite = Date.now() + 4000;
+        (function mirar() {
+          if (d.querySelector('#panel').classList.contains('activo')) {
+            return res({ marco: f, win: w, doc: d });
+          }
+          if (Date.now() > limite) {
+            return rej(new Error('el panel no abrió: ' +
+              (d.querySelector('#error-acceso').textContent || 'sin motivo')));
+          }
+          setTimeout(mirar, 20);
+        })();
+      });
     });
   }
 
@@ -569,11 +660,19 @@
 
     prueba('sin WhatsApp el dueño ve un aviso y el catálogo sigue en pie', function () {
       /* El sitio sin número queda prolijo pero inútil: si no avisara, el
-         dueño no tendría cómo darse cuenta. El aviso se arma desde
-         JavaScript y solo en local, igual que el candado. */
+         dueño no tendría cómo darse cuenta. Ahora que el panel está
+         publicado, el aviso ya no puede depender de estar en local: se
+         muestra a quien tenga una sesión abierta, que es el dueño. */
       var c = contenidoBase();
       c.contacto.whatsapp = '';
       sembrar(c);
+      localStorage.setItem('tinta-fundida:sesion-nube', '{"mail":"prueba@local"}');
+
+      var soltar = function () {
+        limpiar();
+        localStorage.removeItem('tinta-fundida:sesion-nube');
+      };
+
       return abrirPagina('../index.html').then(function (f) {
         var d = f.contentDocument;
         var aviso = d.querySelector('.aviso-falta');
@@ -581,6 +680,18 @@
         esperar(aviso.textContent.toLowerCase()).aContener('whatsapp');
         /* que el resto del sitio no se caiga por eso */
         esperar(d.querySelectorAll('.producto').length).aSerMayorQue(0);
+      }).then(soltar, function (e) { soltar(); throw e; });
+    });
+
+    prueba('un cliente cualquiera no ve el aviso de que falta el WhatsApp', function () {
+      /* Es un recado interno. Al visitante no le dice nada y encima le
+         muestra que el negocio tiene algo a medio configurar. */
+      var c = contenidoBase();
+      c.contacto.whatsapp = '';
+      sembrar(c);
+      localStorage.removeItem('tinta-fundida:sesion-nube');
+      return abrirPagina('../index.html').then(function (f) {
+        esperar(!!f.contentDocument.querySelector('.aviso-falta')).aSerFalso();
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
@@ -854,20 +965,22 @@
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
-    prueba('SEGURIDAD · el index.html que se publica no menciona el panel', function () {
-      /* Se lee el archivo crudo, sin ejecutar nada: es exactamente lo que
-         queda subido en el hosting. El candado se agrega después desde
-         JavaScript y solo en local, así que acá no puede aparecer. */
+    prueba('SEGURIDAD · el index.html publicado no lleva ninguna clave', function () {
+      /* Que el index nombre al panel ya no importa: el panel está
+         publicado y el candado es visible a propósito. Lo que sigue
+         importando, y para siempre, es que en el archivo que queda en
+         el servidor no viaje ninguna contraseña. */
       return fetch('../index.html').then(function (r) { return r.text(); })
         .then(function (fuente) {
-          esperar(fuente).aNoContener('admin.html');
-          esperar(fuente).aNoContener('admin.js');
-          esperar(fuente).aNoContener('admin.css');
-          esperar(fuente).aNoContener('clave');
+          esperar(fuente.toLowerCase()).aNoContener('password');
+          esperar(fuente).aNoContener('CLAVE_ADMIN');
+          /* la única clave que puede estar es la publicable, y ni
+             siquiera está acá: vive en js/nube.js */
+          esperar(fuente).aNoContener('service_role');
         });
     });
 
-    prueba('el candado del panel aparece cuando el sitio corre en local', function () {
+    prueba('el candado del panel está en el sitio publicado', function () {
       return abrirPagina('../index.html').then(function (f) {
         var c = f.contentDocument.querySelector('.candado');
         esperar(!!c).aSerVerdadero();
@@ -876,39 +989,50 @@
       });
     });
 
-    prueba('SEGURIDAD · el candado no se arma fuera de local', function () {
-      /* Se copia el sitio a un iframe con un dominio simulado para comprobar
-         que la condición mira de verdad dónde está corriendo la página. */
+    prueba('el candado no depende de dónde esté corriendo el sitio', function () {
+      /* Antes el candado se escondía fuera de la computadora del dueño,
+         y era necesario: la clave estaba escrita en un archivo y lo
+         único que la protegía era que ese archivo no se publicara.
+
+         Ahora esconderlo no protegería nada —la contraseña la verifica
+         el servidor— y rompería lo único que se quiso ganar: que el
+         dueño pueda entrar desde el celular. Esta prueba existe para
+         que a nadie se le ocurra volver a ponerle una condición. */
       return fetch('../js/sitio.js').then(function (r) { return r.text(); })
         .then(function (fuente) {
-          var deteccion = fuente.match(/var local = ([\s\S]*?);\n/);
-          esperar(!!deteccion).aSerVerdadero();
-
-          var evaluar = new Function('location',
-            'return (' + deteccion[1].replace(/^\s*/, '') + ');');
-
-          esperar(evaluar({ protocol: 'https:', hostname: 'joedev10.github.io' })).aSerFalso();
-          esperar(evaluar({ protocol: 'https:', hostname: 'tintafundida.com.ar' })).aSerFalso();
-          esperar(evaluar({ protocol: 'file:',  hostname: '' })).aSerVerdadero();
-          esperar(evaluar({ protocol: 'http:',  hostname: 'localhost' })).aSerVerdadero();
-          esperar(evaluar({ protocol: 'http:',  hostname: '127.0.0.1' })).aSerVerdadero();
+          if (/var local\s*=/.test(fuente)) {
+            throw new Error('volvió la condición que escondía el candado fuera de local');
+          }
+          esperar(fuente).aContener("el('a', 'candado')");
         });
     });
 
-    prueba('avisa cuando hay cambios sin publicar', function () {
+    prueba('ya no existe el aviso de "cambios sin publicar"', function () {
+      /* Se lo llevó el backend: lo que el dueño guarda ya está publicado,
+         no hay un segundo paso que recordarle. Dejar el cartel sería
+         asustarlo por algo que no es un problema. */
       var c = contenidoBase();
-      c.marca.nombre = 'Borrador';
+      c.marca.nombre = 'Cualquier cosa';
       sembrar(c);
       return abrirPagina('../index.html').then(function (f) {
-        esperar(!!f.contentDocument.querySelector('.aviso-borrador')).aSerVerdadero();
+        esperar(!!f.contentDocument.querySelector('.aviso-borrador')).aSerFalso();
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
-    prueba('sin borrador no aparece ningún aviso', function () {
-      limpiar();
+    prueba('la copia local se usa cuando el servidor no contesta', function () {
+      /* La garantía de que esto no se cae. Las pruebas ya corren sin
+         tocar la red, así que esta situación es exactamente la de
+         alguien entrando con el servicio caído: tiene que ver el sitio
+         completo igual. */
+      var c = contenidoBase();
+      c.marca.nombre = 'Guardado de antes';
+      sembrar(c);
       return abrirPagina('../index.html').then(function (f) {
-        esperar(!!f.contentDocument.querySelector('.aviso-borrador')).aSerFalso();
-      });
+        var d = f.contentDocument;
+        esperar(d.querySelector('#logo-nav').textContent.length).aSerMayorQue(0);
+        esperar(d.querySelectorAll('.producto').length).aSerMayorQue(0);
+        esperar(d.title).aContener('Guardado de antes');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
     prueba('aguanta un borrador viejo al que le faltan campos', function () {
@@ -1124,13 +1248,67 @@
   grupo('Panel', function () {
 
     prueba('rechaza una clave equivocada', function () {
+      /* El "no" ahora lo dice el servidor. Lo que se prueba acá es que
+         el panel no se abra igual y que el motivo se vea en pantalla:
+         un error tragado deja al dueño mirando el formulario sin
+         entender por qué no pasa nada. */
       limpiar();
       return abrirPagina('../admin.html').then(function (f) {
-        var d = f.contentDocument;
+        var w = f.contentWindow, d = f.contentDocument;
+        w.NUBE_PANEL = {
+          hayNube: function () { return true; },
+          sesion:  function () { return null; },
+          entrar:  function () { return Promise.reject(new Error('Mail o contraseña incorrectos.')); }
+        };
+        d.querySelector('#mail').value  = 'quien@sea.com';
         d.querySelector('#clave').value = 'cualquier-cosa';
         d.querySelector('#form-acceso').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-        esperar(d.querySelector('#panel').classList.contains('activo')).aSerFalso();
-        esperar(d.querySelector('#error-acceso').textContent).aContener('incorrecta');
+
+        return new Promise(function (r) { setTimeout(r, 300); }).then(function () {
+          esperar(d.querySelector('#panel').classList.contains('activo')).aSerFalso();
+          esperar(d.querySelector('#error-acceso').textContent).aContener('incorrectos');
+          esperar(d.querySelector('#clave').value).aSer('');   /* no queda escrita */
+        });
+      });
+    });
+
+    prueba('SEGURIDAD · el panel publicado no lleva ninguna contraseña adentro', function () {
+      /* La razón de fondo de todo el cambio. Antes la clave estaba
+         escrita en js/clave.js y el único motivo por el que servía era
+         que ese archivo no se publicaba; con el panel en internet
+         cualquiera abría la URL del archivo y la leía.
+
+         Ahora la contraseña la tiene el servidor y no baja nunca. Esta
+         prueba revisa los tres archivos que sí se publican y falla si
+         alguien vuelve a escribir una clave en el código. */
+      var archivos = ['../js/admin.js', '../js/nube.js', '../js/nube-panel.js'];
+      return Promise.all(archivos.map(function (a) {
+        return fetch(a).then(function (r) { return r.text(); })
+          .then(function (t) { return { archivo: a, texto: t }; });
+      })).then(function (fuentes) {
+        /* Dos cosas se llaman "clave" en este proyecto y no son secretos:
+           los nombres de las llaves de localStorage, que llevan dos
+           puntos ("tinta-fundida:contenido"), y la clave publicable, que
+           es pública por diseño. Todo lo demás que parezca una
+           contraseña escrita a mano es un problema. */
+        function esInofensivo(valor) {
+          return valor.indexOf(':') !== -1 || valor.indexOf('sb_publishable_') === 0;
+        }
+
+        fuentes.forEach(function (f) {
+          var patron = /(?:clave|password|contrase\wa|secret)\w*\s*[:=]\s*['"]([^'"\s]{6,})['"]/gi;
+          var m;
+          while ((m = patron.exec(f.texto))) {
+            if (!esInofensivo(m[1])) {
+              throw new Error(f.archivo + ' tiene una clave escrita: ' + m[0]);
+            }
+          }
+        });
+
+        /* y la clave publicable sí tiene que estar: es la que identifica
+           al proyecto, y su trabajo es justamente ser pública */
+        var nube = fuentes.filter(function (f) { return /nube\.js$/.test(f.archivo); })[0];
+        esperar(nube.texto).aContener('sb_publishable_');
       });
     });
 
@@ -1141,50 +1319,29 @@
       });
     });
 
-    prueba('SEGURIDAD · la clave vive fuera de datos.js', function () {
+    prueba('SEGURIDAD · sin sesión el panel no se abre solo', function () {
+      /* Nadie tiene que poder entrar por el simple hecho de abrir la
+         página. Sin sesión guardada el panel se queda en el formulario,
+         y sin la configuración del servidor avisa qué falta en vez de
+         dejar pasar. */
+      limpiar();
+      try { localStorage.removeItem('tinta-fundida:sesion-nube'); } catch (e) {}
+
       return abrirPagina('../admin.html').then(function (f) {
-        esperar(typeof f.contentWindow.CLAVE_ADMIN).aSer('string');
-        esperar(f.contentWindow.CLAVE_ADMIN.length).aSerMayorQue(7);
-        esperar(JSON.stringify(f.contentWindow.DATOS_SITIO)).aNoContener(f.contentWindow.CLAVE_ADMIN);
+        var d = f.contentDocument;
+        esperar(d.querySelector('#panel').classList.contains('activo')).aSerFalso();
+
+        /* y si falta js/nube.js, tampoco entra: lo dice y se queda */
+        f.contentWindow.NUBE_PANEL = { hayNube: function () { return false; } };
+        d.querySelector('#mail').value  = 'quien@sea.com';
+        d.querySelector('#clave').value = 'lo-que-sea';
+        d.querySelector('#form-acceso').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+
+        return new Promise(function (r) { setTimeout(r, 200); }).then(function () {
+          esperar(d.querySelector('#panel').classList.contains('activo')).aSerFalso();
+          esperar(d.querySelector('#error-acceso').textContent).aContener('servidor');
+        });
       });
-    });
-
-    prueba('SEGURIDAD · el panel no tiene ninguna clave de respaldo escrita adentro', function () {
-      /* Había una: si js/clave.js faltaba, el panel abría igual con una
-         palabra fija que además salía del nombre del negocio. Ahora sin
-         ese archivo no se entra. Se lee el fuente porque la alternativa
-         —cargar el panel sin clave.js— no se puede armar desde acá. */
-      return fetch('../js/admin.js').then(function (r) { return r.text(); })
-        .then(function (fuente) {
-          var respaldo = fuente.match(/CLAVE_ADMIN\s*\|\|\s*['"][^'"]+['"]/);
-          if (respaldo) {
-            throw new Error('quedó una clave de respaldo en el código: ' + respaldo[0]);
-          }
-        });
-    });
-
-    prueba('SEGURIDAD · sin js/clave.js no queda ninguna clave con la que entrar', function () {
-      /* El panel decide la clave una sola vez, al cargar, así que no se
-         puede sacar después desde el iframe. Se saca la línea del fuente
-         y se evalúa con un window sin CLAVE_ADMIN, que es exactamente la
-         situación de alguien que borró el archivo. Mismo truco que usa la
-         prueba del candado.
-
-         Lo que importa es que no quede ninguna clave válida: si esto
-         diera un texto, esa palabra abriría el panel. */
-      return fetch('../js/admin.js').then(function (r) { return r.text(); })
-        .then(function (fuente) {
-          var linea = fuente.match(/var claveAdmin = ([\s\S]*?);\n/);
-          esperar(!!linea).aSerVerdadero();
-
-          var evaluar = new Function('window', 'return (' + linea[1].trim() + ');');
-
-          esperar(evaluar({})).aSer(null);                       /* clave.js borrado */
-          esperar(evaluar({ CLAVE_ADMIN: '' })).aSer(null);      /* archivo vacío */
-          esperar(evaluar({ CLAVE_ADMIN: undefined })).aSer(null);
-          /* y con el archivo en su lugar, la clave sale de ahí */
-          esperar(evaluar({ CLAVE_ADMIN: 'Molde-X' })).aSer('Molde-X');
-        });
     });
 
     prueba('lista los productos que existen', function () {
@@ -1256,12 +1413,75 @@
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
-    prueba('el medidor de espacio informa algo coherente', function () {
+    prueba('el resumen cuenta lo que hay y no habla de espacio', function () {
+      /* El medidor de 5 MB se fue con el base64. Lo que queda tiene que
+         contar piezas, no bytes, y sobre todo no puede volver a hablar
+         de un límite que ya no existe. */
       limpiar();
       return abrirPanel().then(function (p) {
-        var t = p.doc.querySelector('#medidor-texto').textContent;
-        esperar(t).aContener('de ~5 MB');
-        esperar(t).aContener('productos con foto');
+        var t = p.doc.querySelector('#resumen-contenido').textContent;
+        esperar(t).aContener(String(window.DATOS_SITIO.productos.length) + ' productos');
+        esperar(t).aContener('ya está online');
+        esperar(t).aNoContener('MB');
+      });
+    });
+
+    prueba('el resumen avisa cuántas piezas quedaron sin foto', function () {
+      var c = contenidoBase();
+      c.productos[0].imagen = '';
+      c.productos[1].imagen = 'https://ejemplo/una.jpg';
+      sembrar(c);
+      return abrirPanel().then(function (p) {
+        var sinFoto = c.productos.filter(function (x) { return !x.imagen; }).length;
+        esperar(p.doc.querySelector('#resumen-contenido').textContent)
+          .aContener(sinFoto + ' sin foto');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('cerrar sesión borra la sesión y la copia local', function () {
+      /* El panel se abre desde el celular. Si "Salir" dejara la sesión
+         viva, prestar el teléfono una vez sería prestarlo para siempre.
+         Y la copia local es contenido del negocio: tampoco tiene por
+         qué quedar en una máquina que no es del dueño. */
+      limpiar();
+      return abrirPanel().then(function (p) {
+        var cerro = false;
+        p.win.confirm = function () { return true; };
+        /* salir() nunca resuelve a propósito: la recarga cuelga de esa
+           promesa, así que el iframe se queda quieto y da tiempo a
+           mirar cómo quedó todo. location.reload no se puede pisar. */
+        p.win.NUBE_PANEL.salir = function () {
+          cerro = true;
+          return new Promise(function () {});
+        };
+        localStorage.setItem(LS_CONTENIDO, JSON.stringify(contenidoBase()));
+
+        p.doc.querySelector('#salir').click();
+        return esperarA(function () { return cerro; }, 'nunca se cerró la sesión')
+          .then(function () {
+            esperar(localStorage.getItem(LS_CONTENIDO)).aSer(null);
+          });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('cerrar sesión se puede cancelar', function () {
+      limpiar();
+      return abrirPanel().then(function (p) {
+        var cerro = false;
+        p.win.confirm = function () { return false; };
+        p.win.NUBE_PANEL.salir = function () { cerro = true; return Promise.resolve(); };
+        p.doc.querySelector('#salir-cuenta').click();
+        return esperarUnPoco(150).then(function () {
+          esperar(cerro).aSerFalso();
+          esperar(p.doc.querySelector('#panel').classList.contains('activo')).aSerVerdadero();
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('la barra muestra con qué mail entraste', function () {
+      limpiar();
+      return abrirPanel().then(function (p) {
+        esperar(p.doc.querySelector('#barra-mail').textContent).aSer('prueba@local');
       });
     });
   });
@@ -1392,9 +1612,16 @@
   });
 
   /* ==========================================================
-     PUBLICAR
+     COPIAS
+     ------------------------------------------------------------
+     Este grupo se llamaba "Publicar" y probaba el paso que ya no
+     existe. Lo que sobrevive es lo que sigue saliendo del panel
+     como archivo: el respaldo, y el datos.js que hace de red de
+     seguridad cuando el servidor no contesta. Que ese archivo se
+     genere bien importa más que antes, no menos: ahora es lo
+     único que queda en pie si la nube se cae.
      ========================================================== */
-  grupo('Publicar', function () {
+  grupo('Copias', function () {
 
     /* intercepta la descarga sin escribir en el disco */
     function capturarDescarga(win, doc, selectorBoton) {
@@ -1461,15 +1688,20 @@
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
-    prueba('SEGURIDAD · la clave nunca viaja dentro del datos.js publicado', function () {
+    prueba('SEGURIDAD · ninguna clave viaja dentro del datos.js', function () {
+      /* Esta prueba comparaba contra window.CLAVE_ADMIN, que ya no
+         existe: leía undefined y no comparaba nada. Pasaba siempre,
+         que es la peor forma de fallar. Ahora busca lo que sí puede
+         llegar a colarse en un archivo que se sube al repo. */
       limpiar();
-      var clave;
       return abrirPanel().then(function (p) {
-        clave = p.win.CLAVE_ADMIN;
         return capturarDescarga(p.win, p.doc, '#bajar-datos');
       }).then(function (cap) {
-        esperar(cap.texto).aNoContener(clave);
-        esperar(cap.texto.toLowerCase()).aNoContener('clave_admin');
+        var bajo = cap.texto.toLowerCase();
+        esperar(bajo).aNoContener('clave_admin');
+        esperar(bajo).aNoContener('password');
+        esperar(bajo).aNoContener('service_role');
+        esperar(bajo).aNoContener('refresh_token');
         var caja = {};
         new Function('window', cap.texto)(caja);
         esperar(caja.DATOS_SITIO.admin).aSer(undefined);

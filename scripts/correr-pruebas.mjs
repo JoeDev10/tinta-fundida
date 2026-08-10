@@ -54,8 +54,9 @@ function levantarServidor() {
         'cache-control': 'no-store'
       }).end(cuerpo);
     } catch {
-      /* 404 esperado: admin.html no está en el repo y las pruebas del
-         panel se saltean justamente porque este pedido falla */
+      /* Un 404 acá ya no es lo normal: el panel se publica junto con el
+         sitio y tiene que estar. Si falta, las pruebas del panel se
+         saltean en vez de fallar, que sigue siendo lo correcto. */
       res.writeHead(404).end('no está');
     }
   });
@@ -93,7 +94,7 @@ try {
 
   console.log(`  pasaron    ${res.bien}`);
   console.log(`  fallaron   ${res.mal}`);
-  console.log(`  salteadas  ${res.salteadas}${res.salteadas ? '   (necesitan el panel, que no se publica)' : ''}`);
+  console.log(`  salteadas  ${res.salteadas}${res.salteadas ? '   (falta admin.html en esta copia)' : ''}`);
   console.log(`  duración   ${res.segundos}s\n`);
 
   if (res.mal) {

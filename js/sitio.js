@@ -500,15 +500,23 @@
      que es donde el panel existe.
      ========================================================== */
   (function () {
-    var local = location.protocol === 'file:' ||
-                /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-    if (!local) return;
+    /* Antes esto se dibujaba solo en la computadora del dueño, y el
+       index.html publicado no nombraba el panel en ningún lado. Tenía
+       que ser así: la clave estaba escrita en un archivo y lo único
+       que la protegía era que ese archivo no estuviera en el servidor.
 
-    /* Sin número no se dibuja ningún botón de WhatsApp, así que desde el
-       sitio no se nota que falta: se ve prolijo y no sirve para nada. Este
-       aviso va acá adentro porque acá ya sabemos que la página corre en la
-       computadora del dueño. El cliente nunca lo ve. */
-    if (!hayWhatsapp) {
+       Ahora la contraseña la verifica Supabase, así que esconder el
+       candado no aporta nada y sí molesta: el dueño necesita poder
+       entrar desde el celular, y para eso el candado tiene que estar
+       donde él pueda tocarlo. */
+
+    /* El aviso de que falta el WhatsApp sigue siendo solo para el
+       dueño: al cliente no le importa y no puede hacer nada. Se
+       muestra si hay una sesión del panel abierta en este navegador. */
+    var haySesionPanel = false;
+    try { haySesionPanel = !!localStorage.getItem('tinta-fundida:sesion-nube'); } catch (e) {}
+
+    if (!hayWhatsapp && haySesionPanel) {
       var falta = el('div', 'aviso-falta');
       falta.innerHTML = 'Falta cargar el WhatsApp: el sitio está sin ningún ' +
                         'botón para pedir · <a href="admin.html">Panel</a>';
@@ -554,10 +562,12 @@
 
   observar(document.querySelectorAll('[data-reveal]'));
 
-  /* aviso: hay cambios sin publicar en esta computadora */
-  if (hayBorrador) {
-    var aviso = el('div', 'aviso-borrador');
-    aviso.innerHTML = 'Vista con cambios locales sin publicar · <a href="admin.html">Panel</a>';
-    document.body.appendChild(aviso);
-  }
+  /* Acá iba el aviso de "cambios sin publicar". Dejó de existir el
+     concepto: lo que el dueño guarda en el panel ya está publicado,
+     no hay un segundo paso. Lo que queda en esta computadora es una
+     copia de lo último que se vio, y avisar de eso sería asustar por
+     algo que no es un problema.
+
+     La variable hayBorrador se sigue leyendo más arriba porque de ahí
+     sale el contenido cuando el servidor no contesta. */
 })();

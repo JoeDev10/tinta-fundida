@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel · Tinta Fundida</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/estilo.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%2306070b'/><path d='M50 18 82 36v36L50 90 18 72V36z' fill='none' stroke='%2325d9f0' stroke-width='6'/></svg>">
+</head>
+<body class="admin">
+
+<div class="capa-scan"  aria-hidden="true"></div>
+<div class="capa-grano" aria-hidden="true"></div>
+
+<!-- ==================== ACCESO ==================== -->
+<section class="acceso" id="acceso">
+  <div class="acceso__caja">
+    <div class="logo" id="logo-acceso"></div>
+    <p>Panel de administración</p>
+
+    <form id="form-acceso">
+      <div class="campo">
+        <label for="mail">Tu mail</label>
+        <input type="email" id="mail" autocomplete="username" placeholder="vos@ejemplo.com" required>
+      </div>
+      <div class="campo">
+        <label for="clave">Tu contraseña</label>
+        <input type="password" id="clave" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+      <p class="acceso__error" id="error-acceso" role="alert"></p>
+      <button class="btn btn--lleno" type="submit" style="width:100%;margin-top:.6rem"><span id="txt-entrar">Entrar</span></button>
+    </form>
+
+    <p style="margin-top:1.6rem;font-size:.76rem;border-top:1px solid var(--line);padding-top:1.2rem">
+      Entrás con el mismo mail y contraseña desde cualquier lado: la computadora,
+      el celular o la tablet. Lo que cargues acá lo ven tus clientes al toque.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== PANEL ==================== -->
+<div class="panel" id="panel">
+
+  <div class="barra">
+    <div class="logo" id="logo-barra"></div>
+    <div class="barra__sep"></div>
+    <span class="barra__mail" id="barra-mail"></span>
+    <div class="estado guardado" id="estado">
+      <span class="estado__punto"></span>
+      <span id="estado-txt">Guardado</span>
+    </div>
+    <a class="btn-chico" href="index.html" target="_blank" rel="noopener">Ver sitio ↗</a>
+    <button class="btn-chico" id="salir">Salir</button>
+  </div>
+
+  <div class="pestanas" role="tablist">
+    <button class="pestana activa" data-vista="marca"     role="tab">Marca y contacto</button>
+    <button class="pestana"        data-vista="portada"   role="tab">Portada</button>
+    <button class="pestana"        data-vista="servicios" role="tab">Servicios</button>
+    <button class="pestana"        data-vista="catalogo"  role="tab">Catálogo</button>
+    <button class="pestana"        data-vista="proceso"   role="tab">Cómo pedir</button>
+    <button class="pestana"        data-vista="faq"       role="tab">Preguntas</button>
+    <button class="pestana"        data-vista="cuenta"    role="tab">Copias y cuenta</button>
+  </div>
+
+  <div class="lienzo">
+
+    <!-- ---------- MARCA ---------- -->
+    <section class="vista activa" id="v-marca">
+      <h2 class="vista__titulo">Marca y contacto</h2>
+      <p class="vista__ayuda">El nombre del negocio y por dónde te escriben. El número de WhatsApp alimenta todos los botones del sitio.</p>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">Identidad</h3>
+        <div class="campos campos--2">
+          <div class="campo">
+            <label for="m-nombre">Nombre del negocio</label>
+            <input type="text" id="m-nombre" data-bind="marca.nombre">
+          </div>
+          <div class="campo">
+            <label for="m-slogan">Slogan corto</label>
+            <input type="text" id="m-slogan" data-bind="marca.slogan">
+          </div>
+          <div class="campo">
+            <label for="m-logo">Logo · parte principal</label>
+            <input type="text" id="m-logo" data-bind="marca.logo">
+            <small>Se muestra en verde, arriba a la izquierda.</small>
+          </div>
+          <div class="campo">
+            <label for="m-logosuf">Logo · parte chica</label>
+            <input type="text" id="m-logosuf" data-bind="marca.logoSufijo">
+            <small>El recuadro que va al lado. Ej: 3D</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">WhatsApp</h3>
+        <div class="campos campos--2">
+          <div class="campo">
+            <label for="c-wa">Número con código de país</label>
+            <input type="text" id="c-wa" data-bind="contacto.whatsapp" placeholder="5491122334455" inputmode="numeric">
+            <small>Sin +, sin espacios y sin el 15. Ej: Argentina 11 2233-4455 → <b style="color:var(--lime)">5491122334455</b></small>
+          </div>
+          <div class="campo">
+            <label for="c-msg">Mensaje que aparece escrito</label>
+            <input type="text" id="c-msg" data-bind="contacto.mensaje">
+            <small>Lo que el cliente ve ya tipeado al abrir el chat.</small>
+          </div>
+        </div>
+        <div style="margin-top:1.2rem">
+          <a class="btn-chico" id="probar-wa" href="#" target="_blank" rel="noopener">Probar el link ↗</a>
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">Redes y datos</h3>
+        <div class="campos campos--3">
+          <div class="campo">
+            <label for="c-ig">Instagram</label>
+            <input type="text" id="c-ig" data-bind="contacto.instagram" placeholder="tucuenta">
+          </div>
+          <div class="campo">
+            <label for="c-tt">TikTok</label>
+            <input type="text" id="c-tt" data-bind="contacto.tiktok" placeholder="tucuenta">
+          </div>
+          <div class="campo">
+            <label for="c-mail">Email</label>
+            <input type="email" id="c-mail" data-bind="contacto.email" placeholder="hola@tunegocio.com">
+          </div>
+          <div class="campo">
+            <label for="c-ciudad">Ciudad / zona</label>
+            <input type="text" id="c-ciudad" data-bind="contacto.ciudad">
+          </div>
+          <div class="campo">
+            <label for="c-horario">Horario</label>
+            <input type="text" id="c-horario" data-bind="contacto.horario">
+          </div>
+          <div class="campo">
+            <label for="c-envios">Envíos</label>
+            <input type="text" id="c-envios" data-bind="contacto.envios">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- PORTADA ---------- -->
+    <section class="vista" id="v-portada">
+      <h2 class="vista__titulo">Portada</h2>
+      <p class="vista__ayuda">Lo primero que ve alguien que entra. Tenés unos 3 segundos: que se entienda qué hacés y cómo te escriben.</p>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">Textos principales</h3>
+        <div class="campos">
+          <div class="campo">
+            <label for="h-kicker">Línea chica de arriba</label>
+            <input type="text" id="h-kicker" data-bind="hero.kicker">
+          </div>
+          <div class="campo">
+            <label for="h-titulo">Título grande</label>
+            <input type="text" id="h-titulo" data-bind="hero.titulo">
+            <small>Se parte solo en 3 líneas. Funciona mejor con 4 a 7 palabras.</small>
+          </div>
+          <div class="campo">
+            <label for="h-bajada">Bajada</label>
+            <textarea id="h-bajada" data-bind="hero.bajada"></textarea>
+          </div>
+        </div>
+        <div class="campos campos--2" style="margin-top:1.2rem">
+          <div class="campo">
+            <label for="h-cta1">Botón principal</label>
+            <input type="text" id="h-cta1" data-bind="hero.ctaPrimario">
+          </div>
+          <div class="campo">
+            <label for="h-cta2">Botón secundario</label>
+            <input type="text" id="h-cta2" data-bind="hero.ctaSecundario">
+          </div>
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">
+          Números destacados
+          <label class="switch">
+            <input type="checkbox" data-bind="secciones.stats" data-tipo="check">
+            <span class="switch__pista"></span>
+            <span class="switch__txt">Mostrar</span>
+          </label>
+        </h3>
+        <div id="lista-stats"></div>
+        <button class="agregar" data-agregar="stats">+ Agregar número</button>
+      </div>
+    </section>
+
+    <!-- ---------- SERVICIOS ---------- -->
+    <section class="vista" id="v-servicios">
+      <h2 class="vista__titulo">Servicios</h2>
+      <p class="vista__ayuda">Las formas en que trabajás. Con dos o tres alcanza; más que eso el cliente no lee.</p>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">
+          Bloques de servicio
+          <label class="switch">
+            <input type="checkbox" data-bind="secciones.servicios" data-tipo="check">
+            <span class="switch__pista"></span>
+            <span class="switch__txt">Mostrar sección</span>
+          </label>
+        </h3>
+        <div id="lista-servicios"></div>
+        <button class="agregar" data-agregar="servicios">+ Agregar servicio</button>
+      </div>
+    </section>
+
+    <!-- ---------- CATÁLOGO ---------- -->
+    <section class="vista" id="v-catalogo">
+      <h2 class="vista__titulo">Catálogo</h2>
+      <p class="vista__ayuda">Tus piezas. Cada una lleva su foto y un botón que abre WhatsApp con el nombre del producto ya escrito.</p>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">
+          Categorías
+          <label class="switch">
+            <input type="checkbox" data-bind="secciones.catalogo" data-tipo="check">
+            <span class="switch__pista"></span>
+            <span class="switch__txt">Mostrar sección</span>
+          </label>
+        </h3>
+        <div class="campo">
+          <label for="cats">Separadas por coma</label>
+          <input type="text" id="cats" placeholder="Deco, Regalos, Piezas técnicas">
+          <small>Son los filtros que aparecen arriba del catálogo.</small>
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">
+          <span>Productos · <span id="conteo-productos">0</span></span>
+          <button class="btn-chico btn-chico--lima" id="nuevo-producto">+ Nuevo producto</button>
+        </h3>
+
+        <div class="soltar-varias" id="soltar-varias" tabindex="0" role="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+          </svg>
+          <div>
+            <strong>Soltá tus fotos acá</strong>
+            <span>Podés arrastrar varias juntas: te armo un producto por cada foto</span>
+          </div>
+        </div>
+
+        <div class="productos-grilla" id="grilla-admin"></div>
+      </div>
+
+      <input type="file" id="archivo-rapido" accept="image/*" hidden>
+      <input type="file" id="archivo-varias" accept="image/*" multiple hidden>
+    </section>
+
+    <!-- ---------- PROCESO ---------- -->
+    <section class="vista" id="v-proceso">
+      <h2 class="vista__titulo">Cómo pedir</h2>
+      <p class="vista__ayuda">Los pasos desde que te escriben hasta que reciben la pieza. Baja la ansiedad del que nunca compró algo impreso.</p>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">
+          Pasos
+          <label class="switch">
+            <input type="checkbox" data-bind="secciones.proceso" data-tipo="check">
+            <span class="switch__pista"></span>
+            <span class="switch__txt">Mostrar sección</span>
+          </label>
+        </h3>
+        <div id="lista-proceso"></div>
+        <button class="agregar" data-agregar="proceso">+ Agregar paso</button>
+      </div>
+    </section>
+
+    <!-- ---------- FAQ ---------- -->
+    <section class="vista" id="v-faq">
+      <h2 class="vista__titulo">Preguntas frecuentes</h2>
+      <p class="vista__ayuda">Cada pregunta que contestás acá es un mensaje menos que respondés por WhatsApp.</p>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">
+          Preguntas
+          <label class="switch">
+            <input type="checkbox" data-bind="secciones.faq" data-tipo="check">
+            <span class="switch__pista"></span>
+            <span class="switch__txt">Mostrar sección</span>
+          </label>
+        </h3>
+        <div id="lista-faq"></div>
+        <button class="agregar" data-agregar="faq">+ Agregar pregunta</button>
+      </div>
+    </section>
+
+    <!-- ---------- COPIAS Y CUENTA ---------- -->
+    <section class="vista" id="v-cuenta">
+      <h2 class="vista__titulo">Copias y cuenta</h2>
+      <p class="vista__ayuda">Acá no hay nada que apretar para publicar: eso ya pasó solo. Lo que hay son respaldos y tu sesión.</p>
+
+      <div class="nota">
+        <strong>Ya está publicado.</strong> Cada cosa que escribís se guarda en el servidor
+        sola, y desde ese momento la ve cualquiera que entre al sitio. El punto verde de
+        arriba a la derecha es el aviso: mientras diga <em>Guardado</em>, no te falta ningún paso.
+      </div>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">Tu sitio</h3>
+        <p style="font-size:.87rem;color:var(--txt-dim);margin:0 0 1.2rem" id="resumen-contenido">Contando…</p>
+        <div style="display:flex;gap:.7rem;flex-wrap:wrap">
+          <a class="btn-chico btn-chico--lima" href="index.html" target="_blank" rel="noopener">Ver cómo quedó ↗</a>
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">Copia de seguridad</h3>
+        <p style="font-size:.87rem;color:var(--txt-dim);margin:0 0 1.2rem">
+          Bajá un respaldo cada tanto y guardalo en el Drive o donde quieras. Es tu marcha
+          atrás: si borrás algo sin querer y ya se guardó, restaurás la copia y vuelve todo.
+        </p>
+        <div style="display:flex;gap:.7rem;flex-wrap:wrap">
+          <button class="btn-chico" id="bajar-backup">↓ Descargar copia</button>
+          <button class="btn-chico" id="subir-backup">↑ Restaurar copia</button>
+          <input type="file" id="archivo-backup" accept="application/json,.json" hidden>
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">Tu sesión</h3>
+        <p style="font-size:.87rem;color:var(--txt-dim);margin:0 0 1.2rem">
+          El panel te deja entrado para no pedirte la contraseña cada vez. Si entraste
+          desde un celular prestado o una computadora que no es tuya, cerrá la sesión al irte.
+        </p>
+        <button class="btn-chico btn-chico--rojo" id="salir-cuenta">Cerrar sesión</button>
+      </div>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">Seguridad</h3>
+        <div class="nota">
+          <strong>Tu contraseña la revisa el servidor, no esta página.</strong>
+          Nunca baja a la computadora ni al celular de quien entra, así que no hay
+          dónde ir a espiarla. Por eso este panel puede estar en internet y podés
+          entrar desde donde quieras.
+        </div>
+        <p style="font-size:.87rem;color:var(--txt-dim);margin:0">
+          Además de saber la contraseña hay que estar en la lista de personas
+          autorizadas. Si alguien se registra por su cuenta, no puede tocar nada.
+        </p>
+      </div>
+
+      <div class="bloque">
+        <h3 class="bloque__titulo">Para quien toca el código</h3>
+        <p style="font-size:.87rem;color:var(--txt-dim);margin:0 0 1.2rem">
+          <code>js/datos.js</code> es la red de seguridad: lo que se ve si el servidor no
+          contesta. No se actualiza solo. Cada tanto conviene bajarlo de acá y reemplazar
+          el del repo, para que ese respaldo no quede viejo.
+        </p>
+        <button class="btn-chico" id="bajar-datos">↓ Descargar datos.js</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ==================== MODAL PRODUCTO ==================== -->
+<div class="modal" id="modal-producto" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+  <div class="modal__caja">
+    <div class="modal__cabecera">
+      <h3 id="modal-titulo">Producto</h3>
+      <button class="cerrar" id="modal-cerrar" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="modal__cuerpo">
+      <div class="campo" style="margin-bottom:1.3rem">
+        <label>Foto</label>
+        <div id="zona-foto"></div>
+        <input type="file" id="archivo-foto" accept="image/*" hidden>
+      </div>
+
+      <div class="campos">
+        <div class="campo">
+          <label for="p-nombre">Nombre</label>
+          <input type="text" id="p-nombre" placeholder="Maceta geométrica">
+        </div>
+      </div>
+
+      <div class="campos campos--2" style="margin-top:1.2rem">
+        <div class="campo">
+          <label for="p-cat">Categoría</label>
+          <select id="p-cat"></select>
+        </div>
+        <div class="campo">
+          <label for="p-precio">Precio</label>
+          <input type="text" id="p-precio" placeholder="$ 8.500 o «A cotizar»">
+        </div>
+      </div>
+
+      <div class="campo" style="margin-top:1.2rem">
+        <label for="p-desc">Descripción</label>
+        <textarea id="p-desc" placeholder="Medidas, material, colores, detalles…"></textarea>
+      </div>
+
+      <div style="display:flex;gap:1.8rem;flex-wrap:wrap;margin-top:1.4rem">
+        <label class="switch">
+          <input type="checkbox" id="p-visible">
+          <span class="switch__pista"></span>
+          <span class="switch__txt">Visible en el sitio</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="p-destacado">
+          <span class="switch__pista"></span>
+          <span class="switch__txt">Destacado</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal__pie">
+      <button class="btn-chico" id="modal-cancelar">Cancelar</button>
+      <button class="btn-chico btn-chico--lima" id="modal-guardar">Guardar producto</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- datos.js queda como plantilla: de ahí salen las claves que un
+     contenido viejo pueda no tener todavía. El contenido de verdad
+     lo trae nube-panel.js del servidor. -->
+<script src="js/datos.js"></script>
+<script src="js/nube.js"></script>
+<script src="js/nube-panel.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
