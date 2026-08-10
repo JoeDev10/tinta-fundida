@@ -32,8 +32,40 @@ está al lado del año.
 El panel te deja entrado para no pedirte la clave cada vez. Si entraste desde un
 teléfono prestado, andá a **Copias y cuenta → Cerrar sesión** antes de devolverlo.
 
-**Si te olvidás la contraseña**, escribile a quien te armó el sitio: se
-restablece desde el panel de Supabase en dos minutos.
+Si no te acordás la contraseña, mirá acá abajo.
+
+---
+
+## Me olvidé la contraseña
+
+El panel **no tiene** todavía el "olvidé mi contraseña" que ves en otras páginas.
+Se arregla a mano y tarda dos minutos: **escribile a quien te armó el sitio**, te
+pone una nueva y te la pasa.
+
+Tres cosas para que estés tranquilo:
+
+- **No perdés nada.** El catálogo y las fotos viven en el servidor, no en tu
+  teléfono. Cambiar la contraseña no toca ni una foto.
+- **El sitio sigue funcionando.** Que vos no puedas entrar al panel no afecta en
+  nada a lo que ven tus clientes.
+- **Nadie puede leer tu contraseña, ni siquiera quien administra el servidor.**
+  Está guardada revuelta a propósito. Por eso no se "consulta": se reemplaza.
+
+Cuando tengas la nueva, cambiala apenas puedas por una tuya —hoy eso también lo
+hace quien te armó el sitio— y no la uses en ningún otro lado.
+
+> **Para quien toca el código.** Dashboard de Supabase → *Authentication* →
+> *Users* → buscás el mail → menú de los tres puntos de esa fila → la opción de
+> cambiarle la contraseña. Escribís una nueva y listo: la sesión vieja se cae y
+> entra con esa.
+>
+> No sirve mandar el mail de recuperación (*Send password recovery*): el link
+> llega bien, pero cae en un panel que no tiene pantalla para escribir la
+> contraseña nueva, así que no termina en ningún lado. Mientras eso no exista, el
+> camino es el de arriba.
+>
+> Pasale la clave por un canal distinto del mail de la cuenta —un WhatsApp
+> alcanza— y no la escribas en ningún archivo del repo.
 
 ---
 
@@ -195,13 +227,19 @@ la red de seguridad y hay que despertarlo desde el dashboard de Supabase.
 conviene bajarla desde *Copias y cuenta → Descargar datos.js* y reemplazar la
 del repo, para que ese respaldo no quede viejo.
 
-**`js/clave.js` quedó sin uso** desde que la contraseña la verifica el servidor.
-Sigue en el `.gitignore` porque todavía tiene una clave escrita adentro. Se puede
-borrar tranquilo.
+**`js/clave.js` se borró.** Era donde vivía la contraseña vieja, y quedó sin uso
+desde que la verifica el servidor. La regla del `.gitignore` se queda de guardia
+por si el archivo reaparece en un respaldo restaurado.
+
+> **La contraseña vieja del panel quedó en el historial del repo.** Estuvo
+> escrita en este mismo LEEME, en texto plano, desde el commit `868f117` hasta
+> el `7cf49c3`. Borrarla del archivo no la borra del historial: sigue siendo
+> legible en GitHub. No afecta al sitio —esa clave ya no abre nada— pero si se
+> usó en algún otro lado, hay que cambiarla ahí.
 
 **Falta:** `js/nube-panel.js` —el que habla con el servidor— no tiene pruebas
 propias; las del panel le ponen adelante una nube de mentira. Y el panel no tiene
-"olvidé mi contraseña": hoy se resuelve desde el dashboard.
+"olvidé mi contraseña": hoy se resuelve a mano (ver *Me olvidé la contraseña*).
 
 ---
 

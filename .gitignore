@@ -10,10 +10,11 @@
 # entrar desde el celular.
 
 # ── Lo que NO se publica ────────────────────────────────────
-# clave.js quedó sin uso: ningún archivo lo carga. Sigue ignorado
-# a propósito, porque adentro todavía hay una contraseña escrita y
-# ahora el resto de esta carpeta sí viaja al servidor. Se puede
-# borrar tranquilo.
+# clave.js ya no existe: se borró cuando la contraseña pasó a
+# verificarla el servidor. La regla se queda igual, de guardia: si
+# el archivo reaparece —una copia vieja, un respaldo restaurado—
+# tiene una contraseña escrita adentro y ahora el resto de esta
+# carpeta sí viaja al servidor.
 js/clave.js
 
 # Las pruebas SÍ van al repo: son las que corren solas en cada push.
