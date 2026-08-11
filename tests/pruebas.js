@@ -1508,10 +1508,25 @@
      ========================================================== */
   grupo('Fotos', function () {
 
+    /* Las dos que siguen suben una foto y miden la que quedó guardada.
+       Para eso el producto tiene que arrancar SIN foto: si ya tiene una,
+       la espera de abajo se cumple con esa —está desde el primer
+       instante— y la prueba termina midiendo la foto vieja en vez de la
+       que acaba de subir. Pasaba desapercibido mientras datos.js traía
+       productos de ejemplo pelados; el día que se refrescó con el
+       catálogo de verdad, donde cada pieza tiene su foto, la de los
+       1600px empezó a leer 1100. */
+    function panelConProductoSinFoto() {
+      var c = contenidoBase();
+      c.productos[0].imagen = '';
+      c.productos[0].imagenes = [];
+      sembrar(c);
+      return abrirPanel();
+    }
+
     prueba('una foto grande se achica sola a 1600px', function () {
-      limpiar();
       var panel;
-      return abrirPanel().then(function (p) {
+      return panelConProductoSinFoto().then(function (p) {
         panel = p;
         return fotoDePrueba(2600, 1800, 'grande.jpg');
       }).then(function (archivo) {
@@ -1535,9 +1550,8 @@
     });
 
     prueba('una foto de celular termina pesando poco', function () {
-      limpiar();
       var panel, pesoOriginal;
-      return abrirPanel().then(function (p) {
+      return panelConProductoSinFoto().then(function (p) {
         panel = p;
         return fotoDePrueba(3000, 2250, 'celular.jpg');
       }).then(function (archivo) {
