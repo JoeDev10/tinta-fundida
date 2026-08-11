@@ -423,7 +423,14 @@
          abajo del fold: se veía solo una animación. */
       var f = document.createElement('iframe');
       f.style.cssText = 'position:absolute;left:-10000px;top:0;width:390px;height:760px;border:0';
-      f.src = '../index.html?movil=1';
+      /* El `test=` no es decorativo y no alcanza con que lo tengan las
+         otras: sin él, contenido.js sale a buscar a la nube de verdad y
+         guarda lo que trae en localStorage. Esta prueba no se entera
+         —mide dónde cae el botón, no cuántos productos hay— pero la
+         siguiente abre el sitio y cuenta los productos del negocio en
+         vez de los de datos.js. Fallaba «esperaba 6 pero vino 7», y solo
+         cuando Supabase contestaba rápido: con la red lenta pasaba. */
+      f.src = '../index.html?movil=1&test=1';
       marcosAbiertos.push(f);
       return new Promise(function (res, rej) {
         f.onload = function () { res(); };
