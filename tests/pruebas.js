@@ -1501,7 +1501,7 @@
      ========================================================== */
   grupo('Fotos', function () {
 
-    prueba('una foto grande se achica sola a 1100px', function () {
+    prueba('una foto grande se achica sola a 1600px', function () {
       limpiar();
       var panel;
       return abrirPanel().then(function (p) {
@@ -1521,9 +1521,9 @@
           img.src = dataURL;
         });
       }).then(function (img) {
-        esperar(Math.max(img.naturalWidth, img.naturalHeight)).aSer(1100);
-        esperar(img.naturalWidth).aSer(1100);
-        esperar(img.naturalHeight).aSer(762);
+        esperar(Math.max(img.naturalWidth, img.naturalHeight)).aSer(1600);
+        esperar(img.naturalWidth).aSer(1600);
+        esperar(img.naturalHeight).aSer(1108);
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 

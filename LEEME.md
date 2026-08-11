@@ -142,9 +142,14 @@ Cuando llegás a 8, el panel te lo dice y deja de aceptar. No es un problema de
 espacio —hay 1 GB— sino de que nadie mira ocho fotos de una maceta, y en un
 celular la tarjeta se vuelve lenta.
 
-Las fotos se achican solas a 1100px antes de subirse, así que no importa si
-vienen del celular: una de 3 MB queda en unos 150 KB. No hace falta que las
+Las fotos se achican solas a 1600px antes de subirse, así que no importa si
+vienen del celular: una de 3 MB queda en unos 400 KB. No hace falta que las
 edites antes.
+
+**No se recorta nada.** La foto entra entera en el cuadrito del catálogo, sea
+vertical, horizontal o cuadrada. Si sobra lugar a los costados queda fondo
+oscuro, que es el color del sitio y no se nota. O sea: subila como salió, que
+no vas a perder la mitad de la pieza.
 
 **El espacio ya no es un problema.** Antes había un tope de 5 MB para todo
 —unas 25 fotos— porque las fotos vivían adentro del navegador. Ahora van al

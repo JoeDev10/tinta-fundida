@@ -690,32 +690,35 @@ h1,h2,h3,h4{
 
 .producto{ display:flex; flex-direction:column; overflow:hidden; }
 
+/* El marco es cuadrado y no 4/3 a propósito: es el que menos espacio
+   desperdicia cuando en la misma grilla conviven fotos de celular
+   (verticales) y fotos apoyadas en la mesa (horizontales). */
 .producto__foto{
-  position:relative; aspect-ratio:4/3; overflow:hidden;
+  position:relative; aspect-ratio:1/1; overflow:hidden;
   background:var(--void-2); border-bottom:1px solid var(--line);
 }
+/* `contain` y no `cover`: la foto entra entera. Con `cover` la foto se
+   estiraba hasta llenar el marco y lo que sobraba se cortaba, así que
+   una foto vertical de celular perdía la mitad de la pieza, que es
+   justo lo único que el visitante entró a mirar. */
 .producto__foto img{
-  width:100%; height:100%; object-fit:cover;
-  transition:transform .7s var(--ease), filter .5s;
-  filter:saturate(.88) contrast(1.06);
+  width:100%; height:100%; object-fit:contain;
+  transition:transform .7s var(--ease);
 }
-.producto:hover .producto__foto img{ transform:scale(1.07); filter:saturate(1.05) contrast(1.1); }
+/* el zoom del hover queda corto (1.04): con `contain` la foto ya llega
+   al borde del marco, y agrandarla de más vuelve a comerle los costados */
+.producto:hover .producto__foto img{ transform:scale(1.04); }
 
 /* Con varias fotos el zoom del hover se apaga: agrandar la imagen
    adentro de algo que scrollea corre el carrusel de lugar solo, y la
    foto queda a mitad de camino entre dos. */
 .producto:hover .producto__foto--varias img{ transform:none; }
 
-/* líneas de capa sobre la foto */
-.producto__foto::after{
-  content:""; position:absolute; inset:0; pointer-events:none;
-  background:repeating-linear-gradient(to bottom,
-    rgba(0,0,0,.16) 0px, rgba(0,0,0,.16) 1px,
-    transparent 1px, transparent 5px);
-  opacity:.55; transition:opacity .4s;
-  z-index:2;   /* por encima del carrusel, pero sin comerse el arrastre */
-}
-.producto:hover .producto__foto::after{ opacity:.2; }
+/* Acá iba un rayado oscuro encima de cada foto, imitando las capas de
+   la impresión. Se sacó: era lindo sobre un render y espantoso sobre
+   una foto real, porque le tapaba el detalle de la pieza justo cuando
+   la pieza es lo que se está vendiendo. El motivo de capas sigue vivo
+   en el placeholder de «sin foto» (.marcador), donde no molesta. */
 
 /* ---------- carrusel de fotos ----------
    El deslizar con el dedo es todo esto: scroll-snap y nada más. Los
@@ -731,7 +734,7 @@ h1,h2,h3,h4{
 }
 .carrusel::-webkit-scrollbar{ display:none; }
 .carrusel img{
-  flex:0 0 100%; width:100%; height:100%; object-fit:cover;
+  flex:0 0 100%; width:100%; height:100%; object-fit:contain;
   scroll-snap-align:center; scroll-snap-stop:always;
 }
 

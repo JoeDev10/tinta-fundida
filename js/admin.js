@@ -1073,8 +1073,13 @@
     /* achica la imagen antes de guardarla: sin esto, tres fotos
        de celular llenan todo el espacio disponible */
     function procesarImagen(archivo, maxLado, calidad) {
-      maxLado = maxLado || 1100;
-      calidad = calidad || 0.78;
+      /* 1600 y 0.88, no 1100 y 0.78: en pantallas retina la tarjeta pide
+         cerca de 1200 píxeles reales, y a 1100 el navegador tenía que
+         estirar la foto para llenarla. Se veía blanda justo en el detalle
+         de la pieza. El costo es medio megabyte más por foto, que el
+         `loading="lazy"` del catálogo se encarga de no cobrar de entrada. */
+      maxLado = maxLado || 1600;
+      calidad = calidad || 0.88;
 
       return new Promise(function (res, rej) {
         var lector = new FileReader();
