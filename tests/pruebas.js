@@ -21,7 +21,7 @@
   function prueba(nombre, fn) { suite.push({ grupo: grupoActual, nombre: nombre, fn: fn }); }
 
   /* Estos tres grupos abren admin.html. Desde que el panel se publica
-     junto con el sitio, siempre está: los 86 corren en todos lados y
+     junto con el sitio, siempre está: los 93 corren en todos lados y
      no se saltea nada.
 
      El mecanismo queda igual, y no por nostalgia: si alguna vez el
@@ -151,6 +151,16 @@
 
   function contenidoBase() {
     return JSON.parse(JSON.stringify(window.DATOS_SITIO));
+  }
+
+  /* una imagen de verdad, de 1x1, para cuando lo que se prueba no es la
+     foto sino lo que el panel o el sitio hacen con ella */
+  var PIXEL = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+  function pixeles(n) {
+    var lista = [];
+    /* distintas entre sí: si el orden se pierde, hay que poder notarlo */
+    for (var i = 0; i < n; i++) lista.push(PIXEL + '#' + (i + 1));
+    return lista;
   }
 
   function sembrar(contenido) {
@@ -1540,7 +1550,7 @@
 
     prueba('un click quita la foto y la deja vacía', function () {
       var c = contenidoBase();
-      c.productos[0].imagen = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+      c.productos[0].imagen = PIXEL;
       sembrar(c);
       return abrirPanel().then(function (p) {
         var botonQuitar = p.doc.querySelector('[data-pquitarfoto="0"]');
@@ -1552,14 +1562,16 @@
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
-    prueba('sin foto se ofrece agregar, con foto se ofrece cambiar', function () {
+    prueba('sin foto se ofrece agregar, con foto se ofrece agregar otra', function () {
+      /* Con una sola foto el botón decía "Cambiar" y reemplazaba. Desde
+         que hay varias, agrega: reemplazar es quitar y volver a poner. */
       var c = contenidoBase();
       c.productos[0].imagen = '';
-      c.productos[1].imagen = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+      c.productos[1].imagen = PIXEL;
       sembrar(c);
       return abrirPanel().then(function (p) {
-        esperar(p.doc.querySelector('[data-pfoto="0"]').textContent).aContener('Agregar');
-        esperar(p.doc.querySelector('[data-pfoto="1"]').textContent).aContener('Cambiar');
+        esperar(p.doc.querySelector('[data-pfoto="0"]').textContent).aContener('Agregar foto');
+        esperar(p.doc.querySelector('[data-pfoto="1"]').textContent).aContener('Agregar otra');
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
@@ -1607,6 +1619,155 @@
           var n = despues ? despues.productos.length : window.DATOS_SITIO.productos.length;
           esperar(n).aSer(window.DATOS_SITIO.productos.length);
         });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    /* --------------------------------------------------------
+       VARIAS FOTOS POR PIEZA
+       -------------------------------------------------------- */
+
+    prueba('COMPATIBILIDAD · un producto viejo, con imagen y sin lista, se sigue viendo', function () {
+      /* El caso real: una copia de seguridad de antes del carrusel, o el
+         datos.js del repo sin actualizar. No tienen `imagenes` en ningún
+         lado y el sitio tiene que mostrarlos igual. */
+      var c = contenidoBase();
+      c.productos.forEach(function (p) { delete p.imagenes; p.imagen = ''; });
+      c.productos[0].imagen = PIXEL;
+      c.productos[0].categoria = 'Todo';
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        var caja = d.querySelector('.producto .producto__foto');
+        esperar(caja.querySelectorAll('img').length).aSer(1);
+        esperar(caja.querySelector('img').getAttribute('src')).aSer(PIXEL);
+        /* con una sola foto no se arma carrusel ni aparecen puntitos */
+        esperar(caja.querySelectorAll('.carrusel__punto').length).aSer(0);
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('tres fotos dibujan tres imágenes y tres puntitos', function () {
+      var c = contenidoBase();
+      c.productos.forEach(function (p) { p.imagen = ''; p.imagenes = []; });
+      c.productos[0].imagenes = pixeles(3);
+      c.productos[0].imagen   = c.productos[0].imagenes[0];
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        var caja = d.querySelector('.producto .producto__foto');
+        esperar(caja.querySelectorAll('.carrusel img').length).aSer(3);
+        esperar(caja.querySelectorAll('.carrusel__punto').length).aSer(3);
+        esperar(caja.querySelectorAll('.carrusel__punto.activo').length).aSer(1);
+        /* la primera no va con lazy: es la que el visitante ve al entrar */
+        var imgs = caja.querySelectorAll('.carrusel img');
+        esperar(imgs[0].hasAttribute('loading')).aSerFalso();
+        esperar(imgs[1].getAttribute('loading')).aSer('lazy');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('la primera de la lista es la portada, y ese es el orden que se ve', function () {
+      var fotos = pixeles(3);
+      var c = contenidoBase();
+      c.productos.forEach(function (p) { p.imagen = ''; p.imagenes = []; });
+      c.productos[0].imagenes = fotos;
+      c.productos[0].imagen   = fotos[0];
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        var vistas = Array.prototype.map.call(
+          f.contentDocument.querySelectorAll('.producto .carrusel img'),
+          function (n) { return n.getAttribute('src'); });
+        esperar(vistas.join(' | ')).aSer(fotos.join(' | '));
+      }).then(function () {
+        /* y en el panel, la tarjeta muestra esa misma primera */
+        return abrirPanel().then(function (p) {
+          var tarjeta = p.doc.querySelector('.prod-card .prod-card__foto');
+          esperar(tarjeta.querySelector('img').getAttribute('src')).aSer(fotos[0]);
+          esperar(tarjeta.querySelector('.prod-card__cuenta').textContent).aContener('3');
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('al guardar, imagen queda igual a la primera de imagenes', function () {
+      /* El espejo. Si esto se rompe, las copias viejas y el datos.js del
+         repo dejan de mostrar la foto sin que nadie se entere. */
+      var fotos = pixeles(2);
+      var c = contenidoBase();
+      c.productos[0].imagenes = fotos;
+      c.productos[0].imagen   = fotos[0];
+      sembrar(c);
+      return abrirPanel().then(function (p) {
+        p.doc.querySelector('[data-peditar="0"]').click();
+        /* dar vuelta el orden con la flechita de la segunda miniatura */
+        p.doc.querySelector('[data-mimover="1"][data-dir="-1"]').click();
+        p.doc.querySelector('#modal-guardar').click();
+        var g = JSON.parse(localStorage.getItem(LS_CONTENIDO));
+        esperar(g.productos[0].imagenes.join(' | ')).aSer([fotos[1], fotos[0]].join(' | '));
+        esperar(g.productos[0].imagen).aSer(fotos[1]);
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('REGRESIÓN · quitarle la foto a un duplicado no le rompe la del original', function () {
+      /* Duplicar copia las direcciones tal cual. Antes, quitar la foto de
+         una de las dos copias borraba el archivo del servidor y la otra
+         quedaba apuntando a una foto que ya no existía. */
+      var c = contenidoBase();
+      c.productos[0].imagen = PIXEL;
+      c.productos[0].imagenes = [PIXEL];
+      sembrar(c);
+      return abrirPanel().then(function (p) {
+        var borradas = [];
+        p.win.NUBE_PANEL.borrarFoto = function (url) {
+          borradas.push(url);
+          return Promise.resolve();
+        };
+        p.doc.querySelector('[data-pdup="0"]').click();      /* queda la copia en el índice 1 */
+        p.doc.querySelector('[data-pquitarfoto="1"]').click();
+
+        var g = JSON.parse(localStorage.getItem(LS_CONTENIDO));
+        esperar(g.productos[1].imagen).aSer('');             /* la copia se quedó sin foto */
+        esperar(g.productos[0].imagen).aSer(PIXEL);          /* el original la conserva */
+        esperar(borradas.length).aSer(0);                    /* y el archivo NO se borró */
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('tocar un puntito mueve el carrusel y marca ese puntito', function () {
+      /* Lo único que el resto de las pruebas no mira: que además de
+         dibujarse, el carrusel se mueva. Se rompió una vez porque el
+         cálculo de a dónde saltar estaba bien pero el evento de scroll
+         no llegaba, y las tarjetas quedaban con el puntito 1 marcado
+         para siempre. */
+      var c = contenidoBase();
+      c.productos.forEach(function (p) { p.imagen = ''; p.imagenes = []; });
+      c.productos[0].imagenes = pixeles(3);
+      c.productos[0].imagen   = c.productos[0].imagenes[0];
+      sembrar(c);
+      return abrirPagina('../index.html').then(function (f) {
+        var caja = f.contentDocument.querySelector('.producto__foto--varias');
+        var carrusel = caja.querySelector('.carrusel');
+        caja.querySelector('[data-ira="2"]').click();
+        return esperarA(function () {
+          return Math.round(carrusel.scrollLeft / carrusel.clientWidth) === 2;
+        }, 'el carrusel no se movió a la tercera foto', 3000).then(function () {
+          return esperarA(function () {
+            var puntos = caja.querySelectorAll('.carrusel__punto');
+            return puntos[2].classList.contains('activo') &&
+                   !puntos[0].classList.contains('activo');
+          }, 'el puntito activo no se movió', 2000);
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('REGRESIÓN · el carrusel no hace scrollear el sitio para el costado', function () {
+      /* Un contenedor que scrollea en horizontal adentro de la tarjeta es
+         justo la forma de romper el ancho de la página en celular. */
+      var c = contenidoBase();
+      c.productos.forEach(function (p) { p.imagenes = pixeles(4); p.imagen = p.imagenes[0]; });
+      sembrar(c);
+      return abrirPaginaAncho('../index.html', 360, 720).then(function (f) {
+        var d = f.contentDocument;
+        esperar(d.documentElement.scrollWidth).aSerMenorQue(361);
+        var carrusel = d.querySelector('.carrusel');
+        /* el que scrollea es el carrusel, no la página */
+        esperar(carrusel.scrollWidth).aSerMayorQue(carrusel.clientWidth);
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
   });

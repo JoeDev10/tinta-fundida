@@ -41,6 +41,15 @@
       .replace(/"/g, '&quot;');
   };
 
+  /* Las fotos de una pieza. El panel guarda `imagenes` (la lista),
+     pero un contenido viejo —una copia de seguridad, el datos.js del
+     repo sin actualizar— trae sólo `imagen`. Se lee como una lista de
+     una y el sitio no se entera de la diferencia. */
+  var fotosDe = function (p) {
+    if (p && p.imagenes && p.imagenes.length) return p.imagenes;
+    return (p && p.imagen) ? [p.imagen] : [];
+  };
+
   /* ==========================================================
      REVELADO AL SCROLL
      Se define antes de pintar nada, porque las secciones lo usan
@@ -271,13 +280,42 @@
       var msg = 'Hola! Me interesa "' + p.nombre + '"' +
                 (p.precio ? ' (' + p.precio + ')' : '') + '. ¿Está disponible?';
 
-      var foto = p.imagen
-        ? '<img src="' + esc(p.imagen) + '" alt="' + esc(p.nombre) + '" loading="lazy">'
-        : '<div class="marcador">' + MARCADORES[i % MARCADORES.length] +
-          '<span>Sin foto cargada</span></div>';
+      var fotos = fotosDe(p);
+
+      /* Una sola foto se dibuja como siempre. Con varias, la misma caja
+         pasa a ser un carrusel: el deslizar con el dedo lo hace el
+         scroll-snap del CSS, sin una línea de JS. Los puntitos y las
+         flechas son el único agregado, y sólo para poder marcar en cuál
+         estás y moverse con el mouse. */
+      var foto;
+      if (!fotos.length) {
+        foto = '<div class="marcador">' + MARCADORES[i % MARCADORES.length] +
+               '<span>Sin foto cargada</span></div>';
+      } else {
+        foto =
+          '<div class="carrusel" data-carrusel>' +
+            fotos.map(function (url, n) {
+              return '<img src="' + esc(url) + '" alt="' + esc(p.nombre) +
+                     (fotos.length > 1 ? ' · foto ' + (n + 1) + ' de ' + fotos.length : '') + '"' +
+                     /* la primera es la que se ve al entrar: cargarla
+                        con lazy retrasaría lo único que el visitante mira */
+                     (n === 0 ? '' : ' loading="lazy"') + '>';
+            }).join('') +
+          '</div>' +
+          (fotos.length > 1
+            ? '<button class="carrusel__flecha carrusel__flecha--antes" type="button" data-paso="-1" aria-label="Foto anterior">‹</button>' +
+              '<button class="carrusel__flecha carrusel__flecha--despues" type="button" data-paso="1" aria-label="Foto siguiente">›</button>' +
+              '<div class="carrusel__puntos">' +
+                fotos.map(function (url, n) {
+                  return '<button class="carrusel__punto' + (n === 0 ? ' activo' : '') +
+                         '" type="button" data-ira="' + n + '" aria-label="Ver la foto ' + (n + 1) + '"></button>';
+                }).join('') +
+              '</div>'
+            : '');
+      }
 
       return '<article class="tarjeta producto" data-reveal style="--delay:' + ((i % 3) * 90) + 'ms">' +
-        '<div class="producto__foto">' +
+        '<div class="producto__foto' + (fotos.length > 1 ? ' producto__foto--varias' : '') + '">' +
           (p.categoria ? '<span class="producto__chip">' + esc(p.categoria) + '</span>' : '') +
           (p.destacado ? '<span class="producto__destacado">Destacado</span>' : '') +
           foto +
@@ -297,6 +335,59 @@
 
     observar(cont.querySelectorAll('[data-reveal]'));
   }
+
+  /* ==========================================================
+     CARRUSEL DE LA TARJETA
+     ------------------------------------------------------------
+     Deslizar con el dedo ya funciona solo: es scroll-snap del CSS.
+     Esto es nada más para lo que el CSS no puede hacer — marcar en
+     qué foto estás y moverse con el mouse o el teclado.
+
+     Va un solo listener en la grilla y no uno por tarjeta: la grilla
+     se vuelve a dibujar entera cada vez que se toca un filtro, y
+     enganchar listeners a nodos que van a morir es la forma más
+     cómoda de irse llenando de basura.
+     ========================================================== */
+  (function () {
+    var grilla = $('#grilla');
+    if (!grilla) return;
+
+    function irA(carrusel, n) {
+      var fotos = carrusel.children;
+      if (!fotos.length) return;
+      n = Math.max(0, Math.min(n, fotos.length - 1));
+      carrusel.scrollTo({ left: fotos[n].offsetLeft - carrusel.offsetLeft, behavior: 'smooth' });
+    }
+
+    function cualSeVe(carrusel) {
+      var ancho = carrusel.clientWidth || 1;
+      return Math.round(carrusel.scrollLeft / ancho);
+    }
+
+    grilla.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-paso], [data-ira]');
+      if (!b) return;
+      var caja = b.closest('.producto__foto');
+      var carrusel = caja && caja.querySelector('[data-carrusel]');
+      if (!carrusel) return;
+
+      if (b.dataset.ira !== undefined) irA(carrusel, +b.dataset.ira);
+      else irA(carrusel, cualSeVe(carrusel) + (+b.dataset.paso));
+    });
+
+    /* marcar el puntito de la foto que quedó a la vista */
+    grilla.addEventListener('scroll', function (ev) {
+      var carrusel = ev.target.closest && ev.target.closest('[data-carrusel]');
+      if (!carrusel) return;
+      var caja = carrusel.parentNode;
+      var puntos = caja.querySelectorAll('.carrusel__punto');
+      if (!puntos.length) return;
+      var actual = cualSeVe(carrusel);
+      Array.prototype.forEach.call(puntos, function (pt, n) {
+        pt.classList.toggle('activo', n === actual);
+      });
+    }, true);   /* en captura: el scroll no burbujea */
+  })();
 
   /* ==========================================================
      PROCESO

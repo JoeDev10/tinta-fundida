@@ -286,6 +286,16 @@ select{ appearance:none; cursor:pointer;
 }
 .prod-card__tag--gris{ background:var(--surface-3); color:var(--txt-dim); left:auto; right:8px; }
 
+/* cuántas fotos tiene la pieza; sólo aparece cuando hay más de una */
+.prod-card__cuenta{
+  position:absolute; top:8px; right:8px; z-index:2;
+  padding:.2rem .45rem; background:rgba(6,7,11,.88); border:1px solid var(--line-hot);
+  font-family:var(--f-mono); font-size:.55rem; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--txt-dim);
+}
+/* si además está oculto, el rótulo gris ya ocupa esa esquina */
+.prod-card.oculto .prod-card__cuenta{ top:32px; }
+
 /* ---------- zona de arrastre de imagen ---------- */
 .dropzona{
   border:1px dashed var(--line-hot); background:var(--void);
@@ -302,19 +312,45 @@ select{ appearance:none; cursor:pointer;
 .dropzona small{ display:block; margin-top:.4rem; font-family:var(--f-body); font-size:.72rem; color:var(--txt-dim); letter-spacing:0; text-transform:none; }
 .dropzona svg{ width:28px; height:28px; opacity:.75; }
 
-.previa{ position:relative; border:1px solid var(--line); background:var(--void); }
-.previa img{ width:100%; aspect-ratio:4/3; object-fit:cover; display:block; }
-.previa__quitar{
-  position:absolute; top:8px; right:8px;
-  padding:.35rem .7rem; background:rgba(6,7,11,.9); border:1px solid var(--magenta);
-  color:var(--magenta); font-family:var(--f-mono); font-size:.6rem;
-  letter-spacing:.13em; text-transform:uppercase;
+/* la dropzona se achica cuando ya hay fotos en la tira: ahí lo que
+   importa son las miniaturas, no el cartel de arrastrar */
+.dropzona--chica{ padding:.9rem 1rem; margin-top:.6rem; }
+.dropzona--chica svg{ width:20px; height:20px; }
+
+/* ---------- la tira de fotos del modal ---------- */
+.tira{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr));
+  gap:.5rem;
 }
-.previa__quitar:hover{ background:var(--magenta); color:var(--void); }
-.previa__peso{
-  position:absolute; bottom:8px; left:8px;
-  padding:.25rem .55rem; background:rgba(6,7,11,.9); border:1px solid var(--line-hot);
-  font-family:var(--f-mono); font-size:.58rem; letter-spacing:.1em; color:var(--txt-dim);
+.mini{
+  position:relative; border:1px solid var(--line); background:var(--void);
+  cursor:grab; transition:border-color .2s;
+}
+.mini img{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+.mini--portada{ border-color:var(--lime); }
+.mini--destino{ border-color:var(--lime); outline:2px dashed var(--lime); outline-offset:2px; }
+.mini__portada{
+  position:absolute; top:0; left:0; z-index:2;
+  padding:.16rem .4rem; background:var(--lime); color:var(--void);
+  font-family:var(--f-mono); font-size:.52rem; letter-spacing:.12em; text-transform:uppercase;
+}
+.mini__barra{
+  position:absolute; inset:auto 0 0 0; z-index:2; display:flex;
+  background:linear-gradient(to top, rgba(6,7,11,.94), rgba(6,7,11,0));
+  padding:.25rem;  gap:.2rem;
+}
+.mini__btn{
+  flex:1; padding:.2rem 0; line-height:1;
+  background:rgba(6,7,11,.9); border:1px solid var(--line-hot); color:var(--txt);
+  font-family:var(--f-mono); font-size:.72rem; transition:all .18s;
+}
+.mini__btn:hover:not(:disabled){ border-color:var(--lime); color:var(--lime); }
+.mini__btn:disabled{ opacity:.3; cursor:default; }
+.mini__btn--rojo{ font-size:.62rem; }
+.mini__btn--rojo:hover{ border-color:var(--magenta); color:var(--magenta); }
+
+.tira__tope{
+  margin:.6rem 0 0; font-size:.76rem; color:var(--txt-dim);
 }
 
 /* ---------- modal ---------- */

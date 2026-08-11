@@ -103,13 +103,44 @@ del archivo como nombre del producto. Después les ponés precio y descripción.
 > los productos salen ya con el nombre puesto.
 
 **2. Una foto a un producto que ya existe**
-Pasá el mouse por encima de la tarjeta y apretá **Agregar foto** (o *Cambiar
-foto* si ya tenía). Elegís el archivo y listo. También podés arrastrar la foto
-directamente encima de la tarjeta.
+Pasá el mouse por encima de la tarjeta y apretá **Agregar foto**. Elegís el
+archivo y listo. También podés arrastrar la foto directamente encima de la
+tarjeta, y podés soltar varias juntas.
 
 **3. Borrar una foto**
 Pasá el mouse por la tarjeta y apretá **Quitar**. Un click, sin preguntas.
 La foto se va y el producto queda igual.
+
+---
+
+## Varias fotos de la misma pieza
+
+Cada pieza puede tener **hasta 8 fotos**, y en el sitio se ven como un carrusel:
+el cliente desliza con el dedo, o toca los puntitos de abajo.
+
+Para una pieza impresa esto vende bastante más que una foto sola: mostrá el
+frente, el perfil, la pieza en la mano para que se entienda el tamaño, y los
+colores en los que la hacés.
+
+**Cómo se cargan.** Tocá **Agregar foto** en la tarjeta las veces que quieras —
+cada una se suma al final, no reemplaza a la anterior. Si tenés todas juntas en
+una carpeta, seleccionalas de una y entran todas.
+
+**Cómo se ordenan.** Cuando la pieza tiene más de una, aparece el botón
+**Ordenar**, que te abre la ficha con la tira de fotos. Ahí cada foto tiene tres
+botoncitos: **‹** y **›** para moverla, y **✕** para sacarla. En la computadora
+también podés arrastrar una encima de otra.
+
+**La portada es la primera**, y está marcada como tal. Es la que se ve en la
+grilla del catálogo y la que aparece primero cuando alguien entra al sitio. Si
+querés otra de portada, movela al principio con las flechitas.
+
+> El orden importa más de lo que parece: la mayoría mira la primera foto y
+> decide ahí. Poné adelante la que mejor se entienda de un vistazo.
+
+Cuando llegás a 8, el panel te lo dice y deja de aceptar. No es un problema de
+espacio —hay 1 GB— sino de que nadie mira ocho fotos de una maceta, y en un
+celular la tarjeta se vuelve lenta.
 
 Las fotos se achican solas a 1100px antes de subirse, así que no importa si
 vienen del celular: una de 3 MB queda en unos 150 KB. No hace falta que las
@@ -223,6 +254,17 @@ lo dice con todas las letras en vez de fingir que guardó.
 sitio reciba visitas no pasa; si llegara a pausarse, el sitio se sigue viendo con
 la red de seguridad y hay que despertarlo desde el dashboard de Supabase.
 
+**Las fotos del producto son dos campos, y uno es espejo del otro.** `imagenes`
+es la lista, en orden; `imagen` es la portada, o sea `imagenes[0]`, y se escribe
+siempre aunque nadie la lea en el código de hoy. Está ahí porque el contenido
+puede venir de tres lados —la nube, la copia local, `datos.js`— y una copia de
+seguridad bajada antes del carrusel no sabe nada de listas: mientras `imagen`
+siga escrita, eso sigue mostrando la portada en vez de una tarjeta vacía. Se lee
+siempre con `fotosDe(p)`, que está duplicada a propósito en `js/sitio.js` y
+`js/admin.js` porque el panel no carga `contenido.js`. No hay migración: un
+producto viejo se lee como lista de una y se completa solo al guardarlo. El día
+que no quede contenido viejo dando vueltas, `imagen` se puede tirar.
+
 **La red de seguridad es `js/datos.js`**, y no se actualiza sola. Cada tanto
 conviene bajarla desde *Copias y cuenta → Descargar datos.js* y reemplazar la
 del repo, para que ese respaldo no quede viejo.
@@ -245,15 +287,17 @@ propias; las del panel le ponen adelante una nube de mentira. Y el panel no tien
 
 ## Las pruebas automáticas
 
-El proyecto trae **86 pruebas** que abren el sitio y el panel de verdad y los
+El proyecto trae **93 pruebas** que abren el sitio y el panel de verdad y los
 revisan solas: que los links de WhatsApp se armen bien, que las fotos se
 achiquen, que ninguna contraseña quede escrita en el código, que el texto se vea
 sin scrollear, que el nombre del negocio no rompa la barra en celular, que ningún
 filtro del catálogo quede vacío, que el sitio no se scrollee para el costado en
-ninguna pantalla, que no quede ningún botón que no lleve a ningún lado y que la
-miniatura que sale al compartir el link siga diciendo el nombre correcto.
+ninguna pantalla, que el carrusel muestre las fotos en el orden que pusiste, que
+una pieza cargada antes del carrusel se siga viendo, que no quede ningún botón
+que no lleve a ningún lado y que la miniatura que sale al compartir el link siga
+diciendo el nombre correcto.
 
-**Las 86 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
+**Las 93 corren solas en GitHub**, cada vez que se sube algo al repo. Si algo se
 rompe te llega un mail y el commit queda con una cruz roja. No tenés que hacer
 nada para que pase.
 

@@ -701,6 +701,11 @@ h1,h2,h3,h4{
 }
 .producto:hover .producto__foto img{ transform:scale(1.07); filter:saturate(1.05) contrast(1.1); }
 
+/* Con varias fotos el zoom del hover se apaga: agrandar la imagen
+   adentro de algo que scrollea corre el carrusel de lugar solo, y la
+   foto queda a mitad de camino entre dos. */
+.producto:hover .producto__foto--varias img{ transform:none; }
+
 /* líneas de capa sobre la foto */
 .producto__foto::after{
   content:""; position:absolute; inset:0; pointer-events:none;
@@ -708,8 +713,57 @@ h1,h2,h3,h4{
     rgba(0,0,0,.16) 0px, rgba(0,0,0,.16) 1px,
     transparent 1px, transparent 5px);
   opacity:.55; transition:opacity .4s;
+  z-index:2;   /* por encima del carrusel, pero sin comerse el arrastre */
 }
 .producto:hover .producto__foto::after{ opacity:.2; }
+
+/* ---------- carrusel de fotos ----------
+   El deslizar con el dedo es todo esto: scroll-snap y nada más. Los
+   puntitos y las flechas son un agregado; si el JS no corre, el
+   carrusel se sigue pudiendo arrastrar. */
+.carrusel{
+  position:absolute; inset:0;
+  display:flex; overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  scrollbar-width:none;                      /* la barra afea la tarjeta */
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;             /* que no arrastre la página atrás */
+}
+.carrusel::-webkit-scrollbar{ display:none; }
+.carrusel img{
+  flex:0 0 100%; width:100%; height:100%; object-fit:cover;
+  scroll-snap-align:center; scroll-snap-stop:always;
+}
+
+.carrusel__flecha{
+  position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+  width:30px; height:44px; display:grid; place-items:center;
+  background:rgba(6,7,11,.7); border:1px solid var(--line-hot);
+  color:var(--txt); font-size:1.2rem; line-height:1;
+  opacity:0; transition:opacity .22s var(--ease), border-color .2s, color .2s;
+}
+.carrusel__flecha--antes{ left:0; }
+.carrusel__flecha--despues{ right:0; }
+.producto:hover .carrusel__flecha,
+.producto:focus-within .carrusel__flecha{ opacity:1; }
+.carrusel__flecha:hover{ border-color:var(--lime); color:var(--lime); }
+
+/* en pantallas táctiles las flechas sobran: ahí se desliza con el dedo */
+@media (hover:none){
+  .carrusel__flecha{ display:none; }
+}
+
+.carrusel__puntos{
+  position:absolute; left:0; right:0; bottom:8px; z-index:3;
+  display:flex; justify-content:center; gap:6px; pointer-events:none;
+}
+.carrusel__punto{
+  pointer-events:auto;
+  width:7px; height:7px; padding:0; border-radius:50%;
+  background:rgba(255,255,255,.4); border:1px solid rgba(6,7,11,.5);
+  transition:background .2s, transform .2s;
+}
+.carrusel__punto.activo{ background:var(--lime); transform:scale(1.25); }
 
 /* placeholder cuando no hay foto */
 .marcador{

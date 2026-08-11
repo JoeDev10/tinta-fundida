@@ -482,7 +482,47 @@
        CATÁLOGO
        ======================================================== */
     var editando = -1;      /* índice del producto que se está editando, -1 = nuevo */
-    var fotoTemp = '';      /* dataURL de la foto en el modal */
+    var fotosTemp = [];     /* las fotos del producto abierto en el modal */
+
+    /* --- una foto o varias ----------------------------------
+       El producto guarda dos cosas: `imagenes`, la lista, e
+       `imagen`, la portada. La segunda es un espejo de la primera
+       de la lista y se escribe SIEMPRE, aunque nadie la lea acá.
+
+       No es por las dudas. El contenido puede venir de tres lados
+       (la nube, la copia de esta computadora, o el datos.js del
+       repo, que queda viejo a propósito), y una copia de seguridad
+       bajada el mes pasado no sabe nada de listas. Mientras
+       `imagen` siga ahí, todo eso sigue mostrando la portada en vez
+       de una tarjeta vacía. El día que no quede ningún dato viejo
+       dando vueltas, se puede tirar.
+
+       Por eso tampoco hace falta migrar nada a mano: un producto
+       viejo se lee como una lista de una, y se completa solo la
+       próxima vez que se guarde. */
+    var TOPE_FOTOS = 8;
+
+    function fotosDe(p) {
+      if (p && p.imagenes && p.imagenes.length) return p.imagenes.slice();
+      return (p && p.imagen) ? [p.imagen] : [];
+    }
+
+    function ponerFotos(p, lista) {
+      p.imagenes = lista.slice();
+      p.imagen   = lista[0] || '';
+    }
+
+    /* Borrar el archivo del servidor sólo si no quedó nadie más
+       apuntándolo. Duplicar un producto copia las direcciones tal
+       cual, así que sin este chequeo quitar la foto de una copia
+       le rompía la foto al original. */
+    function borrarFotoHuerfana(url) {
+      if (!url) return;
+      var laUsaOtro = datos.productos.some(function (p) {
+        return fotosDe(p).indexOf(url) >= 0;
+      });
+      if (!laUsaOtro) NUBE_PANEL.borrarFoto(url);
+    }
 
     function pintarCatalogo() {
       var cont = $('#grilla-admin');
@@ -495,21 +535,35 @@
       }
 
       cont.innerHTML = datos.productos.map(function (p, i) {
-        var foto = p.imagen
-          ? '<img src="' + esc(p.imagen) + '" alt="">'
+        var fotos = fotosDe(p);
+        var foto = fotos.length
+          ? '<img src="' + esc(fotos[0]) + '" alt="">'
           : '<div class="prod-card__vacia">' + ICO.foto + '<span>Sin foto</span></div>';
+
+        /* La tarjeta muestra siempre la portada. Con varias fotos, el
+           orden y el borrado se hacen en el modal: acá no entran seis
+           miniaturas sin que la grilla se vuelva ilegible. */
+        var acciones =
+          (fotos.length < TOPE_FOTOS
+            ? '<button class="foto-btn" data-pfoto="' + i + '">' + ICO.foto +
+                (fotos.length ? 'Agregar otra' : 'Agregar foto') + '</button>'
+            : '') +
+          (fotos.length > 1
+            ? '<button class="foto-btn" data-pfotos="' + i + '">' + ICO.editar +
+                'Ordenar</button>'
+            : '') +
+          (fotos.length === 1
+            ? '<button class="foto-btn foto-btn--rojo" data-pquitarfoto="' + i + '">' +
+                ICO.borrar + 'Quitar</button>'
+            : '');
 
         return '<div class="prod-card' + (p.visible === false ? ' oculto' : '') + '">' +
           '<div class="prod-card__foto" data-suelta="' + i + '">' +
             (p.destacado ? '<span class="prod-card__tag">Destacado</span>' : '') +
             (p.visible === false ? '<span class="prod-card__tag prod-card__tag--gris">Oculto</span>' : '') +
+            (fotos.length > 1 ? '<span class="prod-card__cuenta">' + fotos.length + ' fotos</span>' : '') +
             foto +
-            '<div class="foto-acciones">' +
-              '<button class="foto-btn" data-pfoto="' + i + '">' + ICO.foto +
-                (p.imagen ? 'Cambiar foto' : 'Agregar foto') + '</button>' +
-              (p.imagen ? '<button class="foto-btn foto-btn--rojo" data-pquitarfoto="' + i + '">' +
-                ICO.borrar + 'Quitar</button>' : '') +
-            '</div>' +
+            '<div class="foto-acciones">' + acciones + '</div>' +
           '</div>' +
           '<div class="prod-card__cuerpo">' +
             '<div class="prod-card__nombre">' + esc(p.nombre) + '</div>' +
@@ -583,39 +637,65 @@
         return;
       }
 
+      if ((b = ev.target.closest('[data-pfotos]'))) { abrirModal(+b.dataset.pfotos); return; }
+
       if ((b = ev.target.closest('[data-pquitarfoto]'))) {
         var iq = +b.dataset.pquitarfoto;
-        var salia = datos.productos[iq].imagen;
-        datos.productos[iq].imagen = '';
+        var salia = fotosDe(datos.productos[iq])[0];
+        ponerFotos(datos.productos[iq], []);
         pintarCatalogo(); guardar();
         /* se borra el archivo del servidor recién después de sacarlo del
            producto: si el borrado falla, queda un archivo suelto ocupando
            lugar, que es mucho menos grave que una tarjeta apuntando a una
            foto que ya no existe */
-        if (salia) NUBE_PANEL.borrarFoto(salia);
+        borrarFotoHuerfana(salia);
         avisar('Foto quitada');
       }
     });
 
+    /* Agrega al final, de a una, sin pisar lo que ya había. Van en
+       cadena y no en paralelo por lo mismo que la carga masiva:
+       procesar ocho fotos de celular a la vez le come la memoria al
+       navegador y en un teléfono viejo lo cuelga. */
     $('#archivo-rapido').addEventListener('change', function () {
-      var f = this.files && this.files[0];
+      var elegidas = Array.prototype.slice.call(this.files || []);
       this.value = '';
-      if (!f || objetivoFoto < 0) return;
+      if (!elegidas.length || objetivoFoto < 0) return;
 
       var destino = objetivoFoto;
       objetivoFoto = -1;
-      avisar('Procesando la foto…');
 
-      subirImagen(f).then(function (url) {
-        var previa = datos.productos[destino].imagen;
-        datos.productos[destino].imagen = url;
-        if (!guardar()) { datos.productos[destino].imagen = previa; return; }
-        if (previa) NUBE_PANEL.borrarFoto(previa);   /* la vieja ya no la mira nadie */
-        pintarCatalogo();
-        avisar('Foto actualizada');
-      }).catch(function (err) {
-        avisar(err.message || 'No se pudo subir la imagen', true);
-      });
+      var lugar = TOPE_FOTOS - fotosDe(datos.productos[destino]).length;
+      var recortada = elegidas.length > lugar;
+      elegidas = elegidas.slice(0, Math.max(0, lugar));
+      if (!elegidas.length) {
+        avisar('Esta pieza ya tiene ' + TOPE_FOTOS + ' fotos, el máximo', true);
+        return;
+      }
+
+      avisar(elegidas.length === 1 ? 'Procesando la foto…'
+                                   : 'Procesando ' + elegidas.length + ' fotos…');
+
+      elegidas.reduce(function (cadena, archivo) {
+        return cadena.then(function () {
+          return subirImagen(archivo).then(function (url) {
+            var producto = datos.productos[destino];
+            var previas = fotosDe(producto);
+            ponerFotos(producto, previas.concat([url]));
+            if (!guardar()) { ponerFotos(producto, previas); throw new Error('no entró'); }
+          });
+        });
+      }, Promise.resolve())
+        .then(function () {
+          pintarCatalogo();
+          avisar(recortada
+            ? 'Llegó al máximo de ' + TOPE_FOTOS + ' fotos'
+            : (elegidas.length === 1 ? 'Foto agregada' : elegidas.length + ' fotos agregadas'));
+        })
+        .catch(function (err) {
+          pintarCatalogo();
+          avisar(err.message || 'No se pudo subir la imagen', true);
+        });
     });
 
     /* arrastrar una foto directamente sobre la tarjeta */
@@ -639,11 +719,11 @@
         if (!z) return;
         ev.preventDefault();
         z.classList.remove('soltando');
-        var f = ev.dataTransfer.files && ev.dataTransfer.files[0];
-        if (!f) return;
+        var sueltas = Array.prototype.slice.call(ev.dataTransfer.files || []);
+        if (!sueltas.length) return;
         objetivoFoto = +z.dataset.suelta;
         var dt = new DataTransfer();
-        dt.items.add(f);
+        sueltas.forEach(function (f) { dt.items.add(f); });
         $('#archivo-rapido').files = dt.files;
         $('#archivo-rapido').dispatchEvent(new Event('change'));
       });
@@ -694,16 +774,17 @@
       fotos.reduce(function (cadena, archivo) {
         return cadena.then(function () {
           return subirImagen(archivo).then(function (url) {
-            datos.productos.push({
+            var nuevo = {
               id: 'p' + Date.now() + Math.floor(Math.random() * 1000),
               nombre: nombreDesdeArchivo(archivo.name),
               categoria: datos.categorias[0] || '',
               precio: '',
               desc: '',
-              imagen: url,
               visible: true,
               destacado: false
-            });
+            };
+            ponerFotos(nuevo, [url]);   /* un producto por foto: entra con una sola */
+            datos.productos.push(nuevo);
             if (!guardar(true)) {
               datos.productos.pop();
               throw new Error('lleno');
@@ -751,7 +832,7 @@
         return '<option value="' + esc(c) + '"' + (c === p.categoria ? ' selected' : '') + '>' + esc(c) + '</option>';
       }).join('') || '<option value="">— sin categorías —</option>';
 
-      fotoTemp = p.imagen || '';
+      fotosTemp = fotosDe(p);
       pintarZonaFoto();
 
       modal.classList.add('abierto');
@@ -762,7 +843,7 @@
     function cerrarModal() {
       modal.classList.remove('abierto');
       document.body.style.overflow = '';
-      fotoTemp = '';
+      fotosTemp = [];
     }
 
     $('#modal-cerrar').addEventListener('click', cerrarModal);
@@ -782,12 +863,13 @@
         categoria: $('#p-cat').value,
         precio:    $('#p-precio').value.trim(),
         desc:      $('#p-desc').value.trim(),
-        imagen:    fotoTemp,
         visible:   $('#p-visible').checked,
         destacado: $('#p-destacado').checked
       };
+      ponerFotos(p, fotosTemp);
 
       var previos = editando >= 0 ? datos.productos[editando] : null;
+      var fotosPrevias = previos ? fotosDe(previos) : [];
       if (editando >= 0) datos.productos[editando] = p;
       else datos.productos.push(p);
 
@@ -798,36 +880,63 @@
         return;
       }
 
+      /* Las que sacó de la tira recién ahora se borran del servidor:
+         si cancelaba el modal no había que tocar nada. */
+      fotosPrevias.forEach(function (url) {
+        if (fotosTemp.indexOf(url) < 0) borrarFotoHuerfana(url);
+      });
+
       pintarCatalogo();
       cerrarModal();
       avisar('Producto guardado');
     });
 
-    /* --- foto del producto --------------------------------- */
+    /* --- fotos del producto ---------------------------------
+       La tira. La primera de la lista es la portada: es la que se ve
+       en la grilla del panel, la que abre el carrusel del sitio y la
+       que sale en `imagen` para los lectores viejos.
+
+       El orden se cambia con las flechitas ‹ › y no sólo arrastrando,
+       porque el dueño edita desde el celular y ahí el arrastre no
+       existe. En la compu funcionan las dos cosas.
+
+       Acá no se muestra ningún peso: antes se calculaba a partir del
+       largo del texto en base64, pero ahora cada foto es una
+       dirección de 90 caracteres y medirla sería mentira. */
     function pintarZonaFoto() {
       var z = $('#zona-foto');
 
-      if (fotoTemp) {
-        /* Antes acá se calculaba el peso a partir del largo del texto,
-           porque la foto venía metida adentro en base64. Ahora fotoTemp
-           es una dirección: medirla diría "90 bytes" y sería mentira.
-           El peso dejó de importarle al dueño —hay 1 GB— así que en vez
-           de un número inventado no se muestra ninguno. */
-        z.innerHTML = '<div class="previa">' +
-          '<img src="' + esc(fotoTemp) + '" alt="Vista previa">' +
-          '<button type="button" class="previa__quitar" id="quitar-foto">Quitar foto</button>' +
+      var tira = fotosTemp.map(function (url, i) {
+        return '<div class="mini' + (i === 0 ? ' mini--portada' : '') + '" draggable="true" data-mini="' + i + '">' +
+          '<img src="' + esc(url) + '" alt="Foto ' + (i + 1) + '">' +
+          (i === 0 ? '<span class="mini__portada">Portada</span>' : '') +
+          '<div class="mini__barra">' +
+            '<button type="button" class="mini__btn" data-mimover="' + i + '" data-dir="-1"' +
+              (i === 0 ? ' disabled' : '') + ' title="Mover antes" aria-label="Mover antes">‹</button>' +
+            '<button type="button" class="mini__btn" data-mimover="' + i + '" data-dir="1"' +
+              (i === fotosTemp.length - 1 ? ' disabled' : '') + ' title="Mover después" aria-label="Mover después">›</button>' +
+            '<button type="button" class="mini__btn mini__btn--rojo" data-miquitar="' + i + '"' +
+              ' title="Quitar esta foto" aria-label="Quitar esta foto">✕</button>' +
+          '</div>' +
         '</div>';
-        $('#quitar-foto').addEventListener('click', function () {
-          fotoTemp = '';
-          pintarZonaFoto();
-        });
-      } else {
-        z.innerHTML = '<div class="dropzona" id="dropzona" tabindex="0" role="button">' +
-          ICO.subir +
-          '<p>Arrastrá una foto o hacé click</p>' +
-          '<small>JPG o PNG · se achica sola para que pese poco</small>' +
-        '</div>';
+      }).join('');
 
+      var lleno = fotosTemp.length >= TOPE_FOTOS;
+
+      z.innerHTML =
+        (fotosTemp.length ? '<div class="tira">' + tira + '</div>' : '') +
+        (lleno
+          ? '<p class="tira__tope">Llegaste a ' + TOPE_FOTOS + ' fotos, el máximo. ' +
+            'Quitá alguna si querés cambiarla.</p>'
+          : '<div class="dropzona' + (fotosTemp.length ? ' dropzona--chica' : '') + '" id="dropzona" tabindex="0" role="button">' +
+              ICO.subir +
+              '<p>' + (fotosTemp.length ? 'Agregar otra foto' : 'Arrastrá tus fotos o hacé click') + '</p>' +
+              '<small>' + (fotosTemp.length
+                ? 'Quedan ' + (TOPE_FOTOS - fotosTemp.length) + ' · la primera es la portada'
+                : 'JPG o PNG · se achican solas para que pesen poco') + '</small>' +
+            '</div>');
+
+      if (!lleno) {
         var dz = $('#dropzona');
         dz.addEventListener('click', function () { $('#archivo-foto').click(); });
         dz.addEventListener('keydown', function (ev) {
@@ -840,29 +949,115 @@
           dz.addEventListener(e, function (ev) { ev.preventDefault(); dz.classList.remove('encima'); });
         });
         dz.addEventListener('drop', function (ev) {
-          if (ev.dataTransfer.files && ev.dataTransfer.files[0]) cargarFoto(ev.dataTransfer.files[0]);
+          if (ev.dataTransfer.files && ev.dataTransfer.files.length) cargarFotos(ev.dataTransfer.files);
         });
       }
     }
 
+    /* --- quitar y reordenar la tira ------------------------- */
+    $('#zona-foto').addEventListener('click', function (ev) {
+      var b;
+
+      if ((b = ev.target.closest('[data-miquitar]'))) {
+        fotosTemp.splice(+b.dataset.miquitar, 1);
+        pintarZonaFoto();
+        return;
+      }
+
+      if ((b = ev.target.closest('[data-mimover]'))) {
+        var i = +b.dataset.mimover, destino = i + (+b.dataset.dir);
+        if (destino < 0 || destino >= fotosTemp.length) return;
+        var tmp = fotosTemp[i];
+        fotosTemp[i] = fotosTemp[destino];
+        fotosTemp[destino] = tmp;
+        pintarZonaFoto();
+      }
+    });
+
+    /* arrastrar una miniatura encima de otra las intercambia */
+    (function () {
+      var origen = -1;
+      var zona = $('#zona-foto');
+
+      zona.addEventListener('dragstart', function (ev) {
+        var m = ev.target.closest('[data-mini]');
+        if (!m) return;
+        origen = +m.dataset.mini;
+        ev.dataTransfer.effectAllowed = 'move';
+        /* Firefox no arranca el arrastre sin algo adentro */
+        try { ev.dataTransfer.setData('text/plain', String(origen)); } catch (e) {}
+      });
+
+      zona.addEventListener('dragover', function (ev) {
+        var m = ev.target.closest('[data-mini]');
+        if (!m || origen < 0) return;
+        ev.preventDefault();
+        m.classList.add('mini--destino');
+      });
+
+      zona.addEventListener('dragleave', function (ev) {
+        var m = ev.target.closest('[data-mini]');
+        if (m && !m.contains(ev.relatedTarget)) m.classList.remove('mini--destino');
+      });
+
+      zona.addEventListener('drop', function (ev) {
+        var m = ev.target.closest('[data-mini]');
+        if (!m || origen < 0) return;
+        ev.preventDefault();
+        ev.stopPropagation();     /* que no lo agarre también la dropzona */
+        var destino = +m.dataset.mini;
+        if (destino !== origen) {
+          var movida = fotosTemp.splice(origen, 1)[0];
+          fotosTemp.splice(destino, 0, movida);
+        }
+        origen = -1;
+        pintarZonaFoto();
+      });
+
+      zona.addEventListener('dragend', function () { origen = -1; });
+    })();
+
     $('#archivo-foto').addEventListener('change', function () {
-      if (this.files && this.files[0]) cargarFoto(this.files[0]);
+      if (this.files && this.files.length) cargarFotos(this.files);
       this.value = '';
     });
 
-    function cargarFoto(archivo) {
-      if (!archivo.type || archivo.type.indexOf('image/') !== 0) {
-        avisar('Eso no es una imagen', true);
+    /* De a una y en cadena, igual que la carga masiva: ocho fotos de
+       celular procesadas en paralelo cuelgan un teléfono viejo. */
+    function cargarFotos(archivos) {
+      var elegidas = Array.prototype.filter.call(archivos, function (f) {
+        return f.type && f.type.indexOf('image/') === 0;
+      });
+
+      if (!elegidas.length) { avisar('Eso no es una imagen', true); return; }
+
+      var lugar = TOPE_FOTOS - fotosTemp.length;
+      var recortada = elegidas.length > lugar;
+      elegidas = elegidas.slice(0, Math.max(0, lugar));
+      if (!elegidas.length) {
+        avisar('Ya tenés ' + TOPE_FOTOS + ' fotos, el máximo', true);
         return;
       }
-      avisar('Subiendo la foto…');
-      subirImagen(archivo).then(function (url) {
-        fotoTemp = url;
-        pintarZonaFoto();
-        avisar('Foto lista');
-      }).catch(function (err) {
-        avisar(err.message || 'No se pudo subir la imagen', true);
-      });
+
+      avisar(elegidas.length === 1 ? 'Subiendo la foto…'
+                                   : 'Subiendo ' + elegidas.length + ' fotos…');
+
+      elegidas.reduce(function (cadena, archivo) {
+        return cadena.then(function () {
+          return subirImagen(archivo).then(function (url) {
+            fotosTemp.push(url);
+            pintarZonaFoto();      /* que las vaya viendo aparecer */
+          });
+        });
+      }, Promise.resolve())
+        .then(function () {
+          avisar(recortada ? 'Entraron las que faltaban para llegar a ' + TOPE_FOTOS
+                           : (elegidas.length === 1 ? 'Foto lista' : 'Fotos listas'));
+        })
+        .catch(function (err) {
+          pintarZonaFoto();
+          avisar(err.message || 'No se pudo subir la imagen', true);
+        });
     }
 
     /* Achica primero y sube después. Lo que queda guardado en el
