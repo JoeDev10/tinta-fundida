@@ -211,8 +211,10 @@
      antes de apretar Entrar. El panel no se entera de nada.
 
      Ojo con lo que esto NO cubre: nada de js/nube-panel.js, que es
-     el que habla con el servidor de verdad. Eso todavía está probado
-     a mano y le falta su propio grupo de pruebas.
+     el que habla con el servidor de verdad. Ese tiene su propio grupo
+     —"Nube", al final— donde se carga de verdad contra un servidor
+     inventado. Acá se lo reemplaza para que las pruebas del panel
+     midan el panel y no el viaje por la red.
      ========================================================== */
   function nubeFalsa() {
     var guardado;
@@ -2449,6 +2451,325 @@
         esperar(recuperado.marca.nombre).aSer(window.DATOS_SITIO.marca.nombre);
         esperar(recuperado.productos.length).aSer(window.DATOS_SITIO.productos.length);
       }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+  });
+
+  /* ==========================================================
+     LA NUBE DE VERDAD
+     ------------------------------------------------------------
+     js/nube-panel.js es el único pedazo del sistema que habla con
+     Supabase. Todas las pruebas del panel le ponen adelante una nube
+     de mentira, así que hasta acá ese archivo no lo probaba nadie.
+
+     Acá se carga de verdad, en tests/nube.html, con el fetch cambiado
+     por uno de mentira. Lo que se prueba es cómo interpreta lo que le
+     contestan —sobre todo cuando le contestan cosas raras— y qué manda
+     al servidor.
+     ========================================================== */
+  grupo('Nube', function () {
+
+    var LS_SESION_NUBE = 'tinta-fundida:sesion-nube';
+
+    function banco() {
+      /* la sesión vive en localStorage y nube-panel.js la lee al
+         cargar: si quedara una de la prueba anterior, la que sigue
+         arrancaría ya "logueada" sin saberlo */
+      try { localStorage.removeItem(LS_SESION_NUBE); } catch (e) {}
+
+      return abrirPagina('nube.html').then(function (f) {
+        var w = f.contentWindow;
+        return {
+          win: w,
+          nube: w.NUBE_PANEL,
+          pedidos: function () { return w.PEDIDOS; },
+          ultimo: function () { return w.PEDIDOS[w.PEDIDOS.length - 1]; },
+          /* lo que va a contestar el servidor, en orden */
+          contesta: function () {
+            Array.prototype.forEach.call(arguments, function (r) { w.RESPUESTAS.push(r); });
+          }
+        };
+      });
+    }
+
+    /* Una entrada exitosa, que es el punto de partida de casi todo.
+       Para que nazca vencida hay que pasar un número NEGATIVO, no cero:
+       nube-panel.js hace `r.expires_in || 3600` y el cero es falsy, así
+       que un cero da una hora de vida en vez de ninguna. */
+    function sesionAbierta(b, segundos) {
+      b.contesta({ estado: 200, json: {
+        access_token: 'token-1', refresh_token: 'refresco-1',
+        expires_in: segundos === undefined ? 3600 : segundos,
+        user: { email: 'duenio@local' }
+      }});
+      return b.nube.entrar('duenio@local', 'la-clave');
+    }
+
+    /* espera a que una promesa falle y devuelve el mensaje */
+    function elErrorDe(promesa) {
+      return promesa.then(function () {
+        throw new Error('no falló, y tenía que fallar');
+      }, function (e) { return e.message; });
+    }
+
+    prueba('entrar guarda la sesión y manda lo que el servidor espera', function () {
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b);
+      }).then(function (s) {
+        esperar(s.mail).aSer('duenio@local');
+        esperar(s.token).aSer('token-1');
+
+        var p = b.ultimo();
+        esperar(p.url).aContener('/auth/v1/token?grant_type=password');
+        esperar(p.metodo).aSer('POST');
+        esperar(p.cabeceras.apikey).aSer('clave-de-mentira');
+        var cuerpo = JSON.parse(p.cuerpo);
+        esperar(cuerpo.email).aSer('duenio@local');
+        esperar(cuerpo.password).aSer('la-clave');
+
+        /* la sesión queda para la próxima vez que abra el panel */
+        esperar(JSON.parse(localStorage.getItem(LS_SESION_NUBE)).token).aSer('token-1');
+      });
+    });
+
+    prueba('el vencimiento se guarda con un minuto de colchón', function () {
+      /* Supabase manda "dura 3600 segundos"; lo único comparable dos
+         días después es un momento absoluto. El minuto de menos es para
+         no usar un token que vence mientras el pedido viaja. */
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        var antes = Date.now();
+        return sesionAbierta(b, 3600).then(function (s) {
+          var esperado = antes + (3600 - 60) * 1000;
+          esperar(Math.abs(s.vence - esperado) < 2000).aSerVerdadero();
+        });
+      });
+    });
+
+    prueba('una clave equivocada se explica en castellano', function () {
+      /* El mensaje de Supabase viene en inglés y es críptico para quien
+         solo quiere entrar a cargar unas fotos. */
+      return banco().then(function (b) {
+        b.contesta({ estado: 400, json: { error_description: 'Invalid login credentials' } });
+        return elErrorDe(b.nube.entrar('duenio@local', 'mal'));
+      }).then(function (msg) {
+        esperar(msg).aSer('Mail o contraseña incorrectos.');
+        esperar(msg).aNoContener('Invalid');
+      });
+    });
+
+    prueba('si falta confirmar el mail, dice exactamente qué hacer', function () {
+      return banco().then(function (b) {
+        b.contesta({ estado: 400, json: { msg: 'Email not confirmed' } });
+        return elErrorDe(b.nube.entrar('duenio@local', 'la-clave'));
+      }).then(function (msg) {
+        esperar(msg).aContener('confirmar el mail');
+        esperar(msg).aContener('link');
+      });
+    });
+
+    prueba('sin internet el mensaje dice qué hacer y no habla de fetch', function () {
+      return banco().then(function (b) {
+        b.contesta({ red: 'Failed to fetch' });
+        return elErrorDe(b.nube.entrar('duenio@local', 'la-clave'));
+      }).then(function (msg) {
+        esperar(msg).aContener('No hay internet');
+        esperar(msg).aContener('Probá de nuevo');
+      });
+    });
+
+    prueba('LA TRAMPA · guardar sin permiso no puede decir que guardó', function () {
+      /* Es la que justifica todo este grupo. Cuando las reglas del
+         servidor no te dejan escribir, Supabase no contesta un error:
+         contesta 200 y cambia cero filas. Sin el chequeo de filas
+         vacías el panel diría "Guardado" para siempre sin guardar nada,
+         y el dueño se enteraría el día que abra el sitio desde otro
+         teléfono y no encuentre ninguno de sus cambios. */
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b);
+      }).then(function () {
+        b.contesta({ estado: 200, json: [] });   /* dijo que sí, no cambió nada */
+        return elErrorDe(b.nube.guardarContenido({ marca: { nombre: 'Algo' } }));
+      }).then(function (msg) {
+        esperar(msg).aContener('no tiene permiso');
+        esperar(msg).aContener('lista de editores');
+      });
+    });
+
+    prueba('guardar bien manda el PATCH con el token y pide la fila de vuelta', function () {
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b);
+      }).then(function () {
+        b.contesta({ estado: 200, json: [{ datos: { marca: { nombre: 'Algo' } } }] });
+        return b.nube.guardarContenido({ marca: { nombre: 'Algo' } });
+      }).then(function () {
+        var p = b.ultimo();
+        esperar(p.metodo).aSer('PATCH');
+        esperar(p.url).aContener('/rest/v1/contenido?id=eq.1');
+        esperar(p.cabeceras.Authorization).aSer('Bearer token-1');
+        /* sin este Prefer la respuesta viene vacía siempre y no habría
+           forma de distinguir "guardado" de "no tenías permiso" */
+        esperar(p.cabeceras.Prefer).aSer('return=representation');
+      });
+    });
+
+    prueba('el token vencido se renueva solo antes de guardar', function () {
+      /* Sin esto el dueño deja el panel abierto una hora, vuelve, toca
+         guardar y se come un error sin entender por qué. */
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b, -100);     /* nace vencido */
+      }).then(function () {
+        b.contesta(
+          { estado: 200, json: { access_token: 'token-2', refresh_token: 'refresco-2',
+                                 expires_in: 3600, user: { email: 'duenio@local' } } },
+          { estado: 200, json: [{ datos: {} }] }
+        );
+        return b.nube.guardarContenido({ marca: { nombre: 'Algo' } });
+      }).then(function () {
+        var ps = b.pedidos();
+        esperar(ps.length).aSer(3);        /* entrar, renovar, guardar */
+        esperar(ps[1].url).aContener('grant_type=refresh_token');
+        esperar(JSON.parse(ps[1].cuerpo).refresh_token).aSer('refresco-1');
+        /* y el guardado sale con el token NUEVO, no con el vencido */
+        esperar(ps[2].cabeceras.Authorization).aSer('Bearer token-2');
+      });
+    });
+
+    prueba('si la renovación falla, se borra la sesión y pide entrar de nuevo', function () {
+      /* Dejar una sesión que no sirve es peor que no tener ninguna: el
+         panel se abriría solo y fallaría en cada guardado. */
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b, -100);
+      }).then(function () {
+        b.contesta({ estado: 401, json: { msg: 'refresh token expired' } });
+        return elErrorDe(b.nube.guardarContenido({ marca: {} }));
+      }).then(function (msg) {
+        esperar(msg).aContener('La sesión venció');
+        esperar(b.nube.sesion()).aSer(null);
+        esperar(localStorage.getItem(LS_SESION_NUBE)).aSer(null);
+      });
+    });
+
+    prueba('subir una foto devuelve la dirección pública y no repite nombres', function () {
+      var b, primera;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b);
+      }).then(function () {
+        b.contesta({ estado: 200, json: {} });
+        return b.nube.subirFoto(new Blob(['x'], { type: 'image/png' }), 'MI FOTO.PNG');
+      }).then(function (url) {
+        primera = url;
+        esperar(url).aContener('/storage/v1/object/public/fotos/');
+        esperar(url).aContener('.png');          /* la extensión, en minúscula */
+        esperar(url).aNoContener('MI FOTO');     /* el nombre original no viaja */
+
+        b.contesta({ estado: 200, json: {} });
+        return b.nube.subirFoto(new Blob(['y'], { type: 'image/png' }), 'MI FOTO.PNG');
+      }).then(function (segunda) {
+        /* dos fotos con el mismo nombre no se pueden pisar una a la otra */
+        esperar(segunda === primera).aSerFalso();
+      });
+    });
+
+    prueba('subir sin permiso lo dice en castellano y sin números', function () {
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b);
+      }).then(function () {
+        b.contesta({ estado: 403, json: { message: 'new row violates row-level security policy' } });
+        return elErrorDe(b.nube.subirFoto(new Blob(['x'], { type: 'image/png' }), 'f.jpg'));
+      }).then(function (msg) {
+        esperar(msg).aSer('Tu usuario no tiene permiso para subir fotos.');
+      });
+    });
+
+    prueba('una respuesta rota al subir igual deja un mensaje entendible', function () {
+      /* Si el servidor contesta un error que ni siquiera es JSON, el
+         dueño tiene que ver algo: quedarse sin mensaje sería peor. */
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b);
+      }).then(function () {
+        b.contesta({ estado: 500, sinJson: true });
+        return elErrorDe(b.nube.subirFoto(new Blob(['x'], { type: 'image/png' }), 'f.jpg'));
+      }).then(function (msg) {
+        esperar(msg).aContener('No se pudo subir la foto');
+        esperar(msg).aContener('500');
+      });
+    });
+
+    prueba('borrar una foto vieja en base64 no molesta al servidor', function () {
+      /* Los productos de antes guardaban la foto adentro del texto. No
+         hay ningún archivo que borrar, y pedirlo sería un error seguro. */
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b);
+      }).then(function () {
+        var antes = b.pedidos().length;
+        return b.nube.borrarFoto('data:image/gif;base64,R0lGODlhAQABAAAAACw=').then(function () {
+          esperar(b.pedidos().length).aSer(antes);
+        });
+      });
+    });
+
+    prueba('que falle el borrado de una foto no traba al dueño', function () {
+      /* El producto ya se editó. Que el archivo quede dando vueltas en
+         el servidor es un desperdicio de espacio, no un problema que
+         valga frenarle el trabajo a nadie. */
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b);
+      }).then(function () {
+        b.contesta({ red: 'se cayó' });
+        /* tiene que resolver, no rechazar */
+        return b.nube.borrarFoto('https://servidor.falso/storage/v1/object/public/fotos/abc.jpg');
+      }).then(function () {
+        var p = b.ultimo();
+        esperar(p.metodo).aSer('DELETE');
+        esperar(p.url).aContener('/storage/v1/object/fotos/abc.jpg');
+      });
+    });
+
+    prueba('salir borra la sesión local aunque el servidor no conteste', function () {
+      /* El panel se abre desde el celular, a veces prestado. Si "Salir"
+         dependiera de que el servidor conteste, un teléfono sin señal
+         quedaría con la sesión abierta. */
+      var b;
+      return banco().then(function (x) {
+        b = x;
+        return sesionAbierta(b);
+      }).then(function () {
+        b.contesta({ red: 'sin señal' });
+        return b.nube.salir();
+      }).then(function () {
+        esperar(b.nube.sesion()).aSer(null);
+        esperar(localStorage.getItem(LS_SESION_NUBE)).aSer(null);
+      });
+    });
+
+    prueba('sin configuración de servidor, hayNube avisa que no', function () {
+      /* Es lo que mira el panel antes de dejar entrar: sin esto la
+         pantalla de acceso fallaría con un error de red incomprensible. */
+      return banco().then(function (b) {
+        esperar(b.nube.hayNube()).aSerVerdadero();
+        esperar(typeof b.nube.entrar).aSer('function');
+        esperar(typeof b.nube.borrarFoto).aSer('function');
+      });
     });
   });
 

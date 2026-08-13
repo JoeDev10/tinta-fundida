@@ -1,7 +1,7 @@
 # Corre las pruebas en cada push. Si algo se rompe, GitHub manda un mail y
 # el commit queda marcado con una cruz roja en la lista de commits.
 #
-# Corren las 111, incluidas las del panel. Antes esas se salteaban porque
+# Corren las 127, incluidas las del panel. Antes esas se salteaban porque
 # admin.html no estaba en el repo; desde que el panel se publica junto con
 # el sitio, no queda nada afuera.
 

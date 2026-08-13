@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Banco de pruebas · nube-panel</title>
+<meta name="robots" content="noindex,nofollow">
+</head>
+<body>
+
+<!-- ============================================================
+     BANCO DE PRUEBAS DE js/nube-panel.js
+     ------------------------------------------------------------
+     nube-panel.js es el único pedazo del sistema que habla con
+     Supabase de verdad. Las pruebas del panel le ponen adelante una
+     nube de mentira, así que hasta acá ese archivo no lo probaba
+     nadie: se probaba a mano y se confiaba.
+
+     Esta página lo carga de verdad, pero con el `fetch` cambiado por
+     uno de mentira. Cada prueba dice de antemano qué va a contestar
+     el servidor —o que se caiga la red— y después mira qué pedidos
+     salieron: a qué dirección, con qué método, con qué cabeceras.
+
+     Se prueba contra un servidor inventado y no contra Supabase a
+     propósito. Contra el de verdad haría falta internet, una cuenta y
+     una contraseña, las pruebas tardarían y fallarían por motivos que
+     no tienen que ver con el código. Lo que acá importa es cómo
+     nube-panel.js interpreta lo que le contestan, sobre todo cuando
+     lo que le contestan es raro.
+     ============================================================ -->
+
+<script>
+  /* lo que salió, para poder mirarlo desde la prueba */
+  window.PEDIDOS = [];
+
+  /* la cola de lo que va a contestar el servidor, una por pedido:
+       { estado: 200, json: {...} }   respuesta normal
+       { red: 'mensaje' }             la red se cayó, fetch rechaza
+       { estado: 500, sinJson: true } contestó algo que no es JSON     */
+  window.RESPUESTAS = [];
+
+  window.fetch = function (url, opciones) {
+    opciones = opciones || {};
+    window.PEDIDOS.push({
+      url: String(url),
+      metodo: opciones.method || 'GET',
+      cabeceras: opciones.headers || {},
+      cuerpo: opciones.body
+    });
+
+    var r = window.RESPUESTAS.shift();
+    if (!r) {
+      return Promise.reject(new Error('la prueba no preparó respuesta para ' + url));
+    }
+    if (r.red) return Promise.reject(new Error(r.red));
+
+    return Promise.resolve({
+      ok: r.estado >= 200 && r.estado < 300,
+      status: r.estado,
+      json: function () {
+        if (r.sinJson) return Promise.reject(new Error('no es JSON'));
+        return Promise.resolve(r.json);
+      }
+    });
+  };
+
+  /* la configuración que nube-panel.js lee al arrancar */
+  window.NUBE = { url: 'https://servidor.falso', clave: 'clave-de-mentira' };
+</script>
+
+<script src="../js/nube-panel.js"></script>
+
+</body>
+</html>
