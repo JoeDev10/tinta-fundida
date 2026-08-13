@@ -651,6 +651,62 @@
       });
     });
 
+    prueba('REGRESIÓN · la foto del catálogo se ve entera, sin recortar', function () {
+      /* Es el reclamo que originó todo esto: el marco era 4/3 con `cover`,
+         o sea que la foto se estiraba hasta llenarlo y lo que sobraba se
+         cortaba. Una foto parada de celular perdía más de la mitad de la
+         pieza, justo lo que el visitante entró a mirar.
+
+         `contain` es exactamente "no recortes": la foto se achica hasta
+         entrar entera y si sobra lugar queda fondo. Por eso se afirma el
+         valor y no una medida: el ancho y el alto de la caja son los
+         mismos con `cover` que con `contain` —lo que cambia es qué parte
+         de la imagen se tira—, así que medir la caja no distingue nada. */
+      var c = contenidoBase();
+      c.productos.forEach(function (p) { p.imagen = ''; p.imagenes = []; });
+      c.productos[0].imagenes = [PIXEL];
+      c.productos[0].imagen   = c.productos[0].imagenes[0];
+      sembrar(c);
+
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument, W = f.contentWindow;
+        var img = d.querySelector('.carrusel img');
+        esperar(W.getComputedStyle(img).objectFit).aSer('contain');
+
+        /* y la caja es cuadrada: es el marco que menos lugar desperdicia
+           cuando conviven fotos paradas y acostadas */
+        var caja = d.querySelector('.producto__foto').getBoundingClientRect();
+        esperar(Math.abs(caja.width - caja.height) < 2).aSerVerdadero();
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('REGRESIÓN · no hay ningún velo encima de las fotos', function () {
+      /* Había dos rayados sobre las fotos: uno propio de cada una y una
+         capa fija que cubría la pantalla entera en modo multiply. Los dos
+         imitaban las capas de la impresión y los dos tapaban el detalle
+         de la pieza. Se sacaron, y esto es para que no vuelvan sin que
+         nadie se entere: lo que se busca es cualquier cosa que oscurezca
+         la foto desde arriba. */
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument, W = f.contentWindow;
+
+        var caja = d.querySelector('.producto__foto');
+        var velo = W.getComputedStyle(caja, '::after');
+        if (velo.backgroundImage && velo.backgroundImage !== 'none') {
+          throw new Error('la foto tiene un fondo encima: ' + velo.backgroundImage.slice(0, 80));
+        }
+
+        var mezclas = Array.prototype.filter.call(d.querySelectorAll('body *'), function (n) {
+          var e = W.getComputedStyle(n);
+          return e.mixBlendMode === 'multiply' && e.position === 'fixed';
+        });
+        if (mezclas.length) {
+          throw new Error('hay ' + mezclas.length + ' capa(s) fija(s) oscureciendo todo: ' +
+                          mezclas[0].className);
+        }
+      });
+    });
+
     prueba('REGRESIÓN · sin WhatsApp cargado no queda ningún botón muerto', function () {
       /* Es el campo más importante del panel y el que más fácil queda vacío.
          Antes los botones seguían dibujados con href="#": el cliente tocaba
@@ -1929,6 +1985,183 @@
             return d.querySelector('.visor').hidden &&
                    !d.documentElement.classList.contains('sin-scroll');
           }, 'el visor no cerró con Escape', 3000);
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('el botón "atrás" del celular cierra el visor sin sacar del sitio', function () {
+      /* En celular el reflejo para cerrar cualquier cosa es el botón de
+         atrás. Si el visor no lo escuchara, ese gesto sacaría al visitante
+         del catálogo entero: entró a mirar una pieza y terminó afuera. */
+      unaPiezaConFotos(2);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument, W = f.contentWindow;
+        var dondeEstaba = W.location.href;
+
+        dedo(f, d.querySelector('.carrusel img'), 0);
+        return esperarA(function () {
+          var v = d.querySelector('.visor');
+          return v && !v.hidden;
+        }, 'el visor no abrió', 3000).then(function () {
+          W.history.back();
+          return esperarA(function () {
+            return d.querySelector('.visor').hidden;
+          }, 'el atrás no cerró el visor', 3000);
+        }).then(function () {
+          /* y el catálogo sigue donde estaba */
+          esperar(W.location.href).aSer(dondeEstaba);
+          esperar(d.querySelectorAll('#grilla .producto').length).aSerMayorQue(0);
+          esperar(d.documentElement.classList.contains('sin-scroll')).aSerFalso();
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('tocar la foto no cierra el visor; tocar el fondo sí', function () {
+      /* Se cierra de más y el visitante pierde la foto cada vez que
+         intenta mirarla de cerca. */
+      unaPiezaConFotos(2);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        dedo(f, d.querySelector('.carrusel img'), 0);
+
+        return esperarA(function () {
+          var v = d.querySelector('.visor');
+          return v && !v.hidden;
+        }, 'el visor no abrió', 3000).then(function () {
+          var v = d.querySelector('.visor');
+
+          v.querySelector('.visor__foto').click();
+          esperar(v.hidden).aSerFalso();
+
+          v.querySelector('.visor__pie').click();
+          esperar(v.hidden).aSerFalso();
+
+          v.click();   /* el fondo */
+          return esperarA(function () { return v.hidden; },
+                          'tocar el fondo no cerró el visor', 3000);
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('las flechas y los puntitos del visor cambian de foto', function () {
+      unaPiezaConFotos(3);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        dedo(f, d.querySelector('.carrusel img'), 0);
+
+        function cual() {
+          var pts = d.querySelectorAll('.visor__punto');
+          return Array.prototype.findIndex.call(pts, function (p) {
+            return p.classList.contains('activo');
+          });
+        }
+
+        return esperarA(function () {
+          var v = d.querySelector('.visor');
+          return v && !v.hidden;
+        }, 'el visor no abrió', 3000).then(function () {
+          var v = d.querySelector('.visor');
+          esperar(cual()).aSer(0);
+
+          v.querySelector('.visor__flecha--despues').click();
+          esperar(cual()).aSer(1);
+
+          v.querySelector('[data-ira="2"]').click();
+          esperar(cual()).aSer(2);
+
+          /* en la última, seguir para adelante no da la vuelta ni rompe */
+          v.querySelector('.visor__flecha--despues').click();
+          esperar(cual()).aSer(2);
+
+          v.querySelector('.visor__flecha--antes').click();
+          esperar(cual()).aSer(1);
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('el visor abre en la foto que se estaba mirando', function () {
+      /* Con el carrusel en la tercera foto, tocar abre esa y no la
+         primera: si volviera al principio, se pierde lo que el visitante
+         había ido a buscar. */
+      unaPiezaConFotos(3);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        var carrusel = d.querySelector('.carrusel');
+        dedo(f, carrusel.children[2], 0);
+
+        return esperarA(function () {
+          var v = d.querySelector('.visor');
+          return v && !v.hidden;
+        }, 'el visor no abrió', 3000).then(function () {
+          var pts = d.querySelectorAll('.visor__punto');
+          esperar(pts[2].classList.contains('activo')).aSerVerdadero();
+          esperar(pts[0].classList.contains('activo')).aSerFalso();
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('el botón de agrandar abre el visor', function () {
+      /* Es el camino de quien navega con teclado o lector de pantalla,
+         que no tiene cómo "tocar" la foto. */
+      unaPiezaConFotos(2);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        var boton = d.querySelector('[data-ampliar]');
+        esperar(!!boton).aSerVerdadero();
+        /* tiene que decir de qué pieza es, no un "ampliar" pelado */
+        esperar(boton.getAttribute('aria-label')).aContener('fotos de');
+
+        boton.click();
+        return esperarA(function () {
+          var v = d.querySelector('.visor');
+          return v && !v.hidden;
+        }, 'el botón de agrandar no abrió el visor', 3000);
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('el visor no estira una foto más allá de su resolución', function () {
+      /* Una foto chica agrandada a pantalla completa no muestra más
+         pieza: muestra la misma borrosa. Y varias de las que ya están
+         cargadas son chicas. */
+      var c = contenidoBase();
+      c.productos.forEach(function (p) { p.imagen = ''; p.imagenes = []; });
+      c.productos[0].imagenes = [fotoDeTamano(200, 150)];
+      c.productos[0].imagen   = c.productos[0].imagenes[0];
+      sembrar(c);
+
+      return abrirPaginaAncho('../index.html', 1200, 800).then(function (f) {
+        var d = f.contentDocument;
+        dedo(f, d.querySelector('.carrusel img'), 0);
+
+        return esperarA(function () {
+          var img = d.querySelector('.visor__foto');
+          return img && img.naturalWidth > 0 && img.getBoundingClientRect().width > 0;
+        }, 'el visor no abrió o la foto no cargó', 4000).then(function () {
+          var img = d.querySelector('.visor__foto');
+          var r = img.getBoundingClientRect();
+          esperar(Math.round(r.width)).aSerMenorQue(img.naturalWidth + 2);
+          esperar(Math.round(r.height)).aSerMenorQue(img.naturalHeight + 2);
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('sin WhatsApp cargado el visor no muestra un botón muerto', function () {
+      var c = contenidoBase();
+      c.contacto.whatsapp = '';
+      c.productos.forEach(function (p) { p.imagen = ''; p.imagenes = []; });
+      c.productos[0].imagenes = pixeles(2);
+      c.productos[0].imagen   = c.productos[0].imagenes[0];
+      sembrar(c);
+
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        dedo(f, d.querySelector('.carrusel img'), 0);
+
+        return esperarA(function () {
+          var v = d.querySelector('.visor');
+          return v && !v.hidden;
+        }, 'el visor no abrió', 3000).then(function () {
+          esperar(d.querySelector('.visor__pedir').hidden).aSerVerdadero();
         });
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
