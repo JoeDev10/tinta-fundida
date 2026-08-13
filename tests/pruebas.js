@@ -1444,9 +1444,14 @@
     });
 
     prueba('el resumen avisa cuántas piezas quedaron sin foto', function () {
+      /* Las dos claves, siempre. Una pieza con fotos guarda la lista en
+         `imagenes` y la portada en `imagen`: tocar solo una deja la
+         otra con la foto real que traiga el contenido, y la prueba
+         termina midiendo algo que no preparó. */
       var c = contenidoBase();
-      c.productos[0].imagen = '';
+      c.productos[0].imagen = '';  c.productos[0].imagenes = [];
       c.productos[1].imagen = 'https://ejemplo/una.jpg';
+      c.productos[1].imagenes = ['https://ejemplo/una.jpg'];
       sembrar(c);
       return abrirPanel().then(function (p) {
         var sinFoto = c.productos.filter(function (x) { return !x.imagen; }).length;
@@ -1571,7 +1576,7 @@
 
     prueba('un click quita la foto y la deja vacía', function () {
       var c = contenidoBase();
-      c.productos[0].imagen = PIXEL;
+      c.productos[0].imagen = PIXEL;  c.productos[0].imagenes = [PIXEL];
       sembrar(c);
       return abrirPanel().then(function (p) {
         var botonQuitar = p.doc.querySelector('[data-pquitarfoto="0"]');
@@ -1587,8 +1592,8 @@
       /* Con una sola foto el botón decía "Cambiar" y reemplazaba. Desde
          que hay varias, agrega: reemplazar es quitar y volver a poner. */
       var c = contenidoBase();
-      c.productos[0].imagen = '';
-      c.productos[1].imagen = PIXEL;
+      c.productos[0].imagen = '';     c.productos[0].imagenes = [];
+      c.productos[1].imagen = PIXEL;  c.productos[1].imagenes = [PIXEL];
       sembrar(c);
       return abrirPanel().then(function (p) {
         esperar(p.doc.querySelector('[data-pfoto="0"]').textContent).aContener('Agregar foto');

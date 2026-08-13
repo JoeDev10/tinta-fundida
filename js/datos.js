@@ -4,7 +4,7 @@
    Archivo generado. No editar a mano: se reemplaza entero
    cada vez que se publica.
 
-   Copia de lo que había en el servidor el 11/8/2026. Es la red
+   Copia de lo que había en el servidor el 13/8/2026. Es la red
    de seguridad: lo que el sitio pinta si el servidor no contesta.
    ============================================================ */
 
@@ -87,24 +87,57 @@ window.DATOS_SITIO = {
   },
   "productos": [
     {
-      "id": "p1",
-      "desc": "Este florero es ideal para decorar cualquier ambiente dando ese toque de elegancia, con su diseño sofisticado .",
-      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786458310969-ezweh5.jpg",
-      "nombre": "Florero Estrella Espiral",
-      "precio": "$ 8.000",
-      "visible": true,
-      "categoria": "Deco",
-      "destacado": true
-    },
-    {
       "id": "p2",
       "desc": "Combina el atractivo estético con la funcionalidad, lo que lo convierte en una gran adición a diversos entornos.",
       "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786457724759-ummaqo.webp",
       "nombre": "Porta Sahumerios",
       "precio": "$ 5.000",
       "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786457724759-ummaqo.webp"
+      ],
       "categoria": "Deco",
+      "destacado": true
+    },
+    {
+      "id": "p1786574990855",
+      "desc": "Perfecto para leer sobre la marcha, durante las comidas o mientras te relajas al aire libre, este accesorio es tanto funcional como adorable.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786575000070-q90e7d.webp",
+      "nombre": "Marca páginas Panda",
+      "precio": "$ 4.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786575000070-q90e7d.webp"
+      ],
+      "categoria": "Miniaturas",
       "destacado": false
+    },
+    {
+      "id": "p1",
+      "desc": "Este florero es ideal para decorar cualquier ambiente dando ese toque de elegancia, con su diseño sofisticado .",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786463619070-r437xq.jpg",
+      "nombre": "Florero Estrella Espiral",
+      "precio": "$ 8.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786463619070-r437xq.jpg"
+      ],
+      "categoria": "Deco",
+      "destacado": true
+    },
+    {
+      "id": "p1786582668170",
+      "desc": "Soporte para auriculares en forma de guitarra.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786582710508-junvj6.webp",
+      "nombre": "Soporte para auriculares",
+      "precio": "$ 15.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786582710508-junvj6.webp",
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786582718145-jen21n.webp"
+      ],
+      "categoria": "Deco",
+      "destacado": true
     },
     {
       "id": "p3",
@@ -117,24 +150,140 @@ window.DATOS_SITIO = {
       "destacado": true
     },
     {
-      "id": "p4",
-      "desc": "¡Muestra tu amor por tus amigos peludos! Este compacto soporte con forma de pata es un accesorio divertido y funcional diseñado para sostener tus momentos favoritos.",
-      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786460273155-cn6j0i.webp",
-      "nombre": "Porta Polaroid huellitas",
-      "precio": "$ 3.000",
+      "id": "p1786574466237",
+      "desc": "Perfecto para leer sobre la marcha, durante las comidas o mientras te relajas al aire libre, este accesorio es tanto funcional como adorable.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786574495622-ene9z9.webp",
+      "nombre": "Sujeta páginas Gato",
+      "precio": "$ 4.000",
       "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786574495622-ene9z9.webp"
+      ],
       "categoria": "Miniaturas",
       "destacado": false
+    },
+    {
+      "id": "p1786577559327",
+      "desc": "Este marca páginas se apoya discretamente en el borde de la página, mientras que su pequeña pestaña se cuela justo en el renglón donde tus ojos dijeron.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786577570288-bex4mj.webp",
+      "nombre": "Marca páginas frases",
+      "precio": "$ 4.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786577570288-bex4mj.webp",
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786577580989-borx57.webp"
+      ],
+      "categoria": "Miniaturas",
+      "destacado": true
+    },
+    {
+      "id": "p1786575681830",
+      "desc": "Separador de hojas para cuadernos, carpetas, Este accesorio es tanto funcional como adorable.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786575696387-j9dxm3.webp",
+      "nombre": "Marca páginas huella",
+      "precio": "$ 4.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786575696387-j9dxm3.webp",
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786575702472-f5v7s2.webp"
+      ],
+      "categoria": "Miniaturas",
+      "destacado": false
+    },
+    {
+      "id": "p1786576793352",
+      "desc": "Tope de estantería, también se puede utilizar como tope de puerta.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786576823927-vxcgr1.webp",
+      "nombre": "Sujeta libros / tope de puerta",
+      "precio": "$ 5.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786576823927-vxcgr1.webp",
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786576830507-fjezg2.webp"
+      ],
+      "categoria": "Deco",
+      "destacado": true
+    },
+    {
+      "id": "p1786578896299",
+      "desc": "Este soporte para casco presenta un diseño minimalista y funcional, ideal para cualquier espacio del hogar o garaje.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786578871385-ym5l9n.webp",
+      "nombre": "Soporte para Casco",
+      "precio": "$ 8.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786578871385-ym5l9n.webp"
+      ],
+      "categoria": "Accesorios",
+      "destacado": true
+    },
+    {
+      "id": "p1786583624153",
+      "desc": "Este modelo está diseñado para servir como soporte funcional y decorativo para un balón de rugby, perfecto para exhibir en hogares, tiendas de deportes o en eventos.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786583633556-kjbmt0.webp",
+      "nombre": "soporte balon de Rugby",
+      "precio": "$ 8.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786583633556-kjbmt0.webp"
+      ],
+      "categoria": "Accesorios",
+      "destacado": true
+    },
+    {
+      "id": "p1786584635325",
+      "desc": "Ideal para llaveros ,decoracion , o que mejor que regalar.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786584647919-ir2w3u.webp",
+      "nombre": "Herramientas Minecraft",
+      "precio": "$5.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786584647919-ir2w3u.webp"
+      ],
+      "categoria": "Juegos y juguetes",
+      "destacado": false
+    },
+    {
+      "id": "p1786587565032",
+      "desc": "¿Un lugar oculto para mantener a salvo tus objetos de valor? ¡Por tiempo limitado, prueba este estante cúbico.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786587593384-unacsk.webp",
+      "nombre": "Estante  de Super Mario",
+      "precio": "$15.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786587593384-unacsk.webp",
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786587594217-4hewik.webp",
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786587594861-vrc62w.webp"
+      ],
+      "categoria": "Juegos y juguetes",
+      "destacado": false
+    },
+    {
+      "id": "p1786585215219",
+      "desc": "Este modelo fue diseñado pensando en la funcionalidad y una estética limpia. Sostiene de forma segura hasta 11 cajas de juegos.",
+      "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786585245678-3q9doy.webp",
+      "nombre": "Soporte para cajas de juegos  PS4",
+      "precio": "$12.000",
+      "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786585245678-3q9doy.webp",
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786585235714-o79qb1.webp"
+      ],
+      "categoria": "Juegos y juguetes",
+      "destacado": true
     },
     {
       "id": "p5",
       "desc": "para jugadores de Magic: The Gathering. Un accesorio esencial que combina funcionalidad, estilo y orden en un solo lugar.",
       "imagen": "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786458654804-8deuub.webp",
-      "nombre": "Soporte para teléfono de Commander (MTG)",
+      "nombre": "Soporte para teléfono de MTG",
       "precio": "$ 12.000",
       "visible": true,
+      "imagenes": [
+        "https://dlfzcbzkpyfemwwbsovf.supabase.co/storage/v1/object/public/fotos/1786458654804-8deuub.webp"
+      ],
       "categoria": "Juegos y juguetes",
-      "destacado": false
+      "destacado": true
     },
     {
       "id": "p6",
@@ -162,7 +311,7 @@ window.DATOS_SITIO = {
     "stats": true,
     "proceso": true,
     "catalogo": true,
-    "servicios": true
+    "servicios": false
   },
   "servicios": [
     {
@@ -188,6 +337,7 @@ window.DATOS_SITIO = {
     "Arte y diseño",
     "Deco",
     "Miniaturas",
-    "Juegos y juguetes"
+    "Juegos y juguetes",
+    "Accesorios"
   ]
 };
