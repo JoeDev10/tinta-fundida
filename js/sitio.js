@@ -505,10 +505,31 @@
       marco.addEventListener('pointercancel', function () { desde = null; });
     }
 
+    /* Hasta dónde se la puede agrandar sin que se note el estirado.
+       Se divide por la densidad de la pantalla porque lo que importa
+       son los píxeles de verdad, no los del CSS: en un celular moderno
+       cada punto del CSS son dos o tres reales, así que una foto de
+       1100 llena la pantalla sin estirarse. En un monitor común, uno a
+       uno, y ahí el tope corta antes. */
+    function ponerTope() {
+      if (!foto.naturalWidth) return;
+      var densidad = window.devicePixelRatio || 1;
+      foto.style.setProperty('--tope-ancho', Math.round(foto.naturalWidth / densidad) + 'px');
+      foto.style.setProperty('--tope-alto', Math.round(foto.naturalHeight / densidad) + 'px');
+    }
+
     function mostrar(n) {
       if (!fotos.length) return;
       indice = Math.max(0, Math.min(n, fotos.length - 1));
+
+      /* el tope viejo se saca antes de cambiar de foto: si no, la
+         siguiente arranca encorsetada con la medida de la anterior */
+      foto.style.removeProperty('--tope-ancho');
+      foto.style.removeProperty('--tope-alto');
+      foto.onload = ponerTope;
+
       foto.src = fotos[indice];
+      if (foto.complete) ponerTope();   /* ya estaba en memoria: onload no vuelve */
       foto.alt = nombre.textContent +
                  (fotos.length > 1 ? ' · foto ' + (indice + 1) + ' de ' + fotos.length : '');
 

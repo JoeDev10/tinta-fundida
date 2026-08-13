@@ -1811,6 +1811,17 @@
       return c;
     }
 
+    /* una foto de verdad, del tamaño que se pida, como dirección de datos.
+       pixeles() devuelve un gif de 1x1: sirve para contar fotos, no para
+       medir cómo entra una en la pantalla. */
+    function fotoDeTamano(ancho, alto) {
+      var cv = document.createElement('canvas');
+      cv.width = ancho; cv.height = alto;
+      var cx = cv.getContext('2d');
+      cx.fillStyle = '#2f7d1e'; cx.fillRect(0, 0, ancho, alto);
+      return cv.toDataURL('image/png');
+    }
+
     /* un dedo que baja y sube; `corrido` es cuánto se movió mientras tanto */
     function dedo(f, elem, corrido) {
       var W = f.contentWindow;
@@ -1860,6 +1871,44 @@
         return esperarUnPoco(300).then(function () {
           var v = d.querySelector('.visor');
           esperar(!!(v && !v.hidden)).aSerFalso();
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('REGRESIÓN · la foto abierta entra en la pantalla', function () {
+      /* Salió publicado así: la foto se abría a su tamaño natural y se iba
+         de la ventana —1102px de alto en una pantalla de 800—. El
+         `max-height:100%` no llegaba a resolverse porque el contenedor era
+         un grid de filas automáticas, donde el alto lo decide el contenido:
+         el porcentaje se medía contra algo que todavía no existía.
+
+         La foto va PARADA a propósito, y esto no es un detalle: con una
+         apaisada el que limita es el ancho, el alto nunca llega a
+         desbordar y la prueba pasa aunque el bug esté puesto. Se probó.
+         Hace falta una donde apriete la altura, que es lo que no se
+         estaba resolviendo. Y grande de verdad: con los 1x1 de pixeles()
+         entraría siempre, sin probar nada. */
+      var c = contenidoBase();
+      c.productos.forEach(function (p) { p.imagen = ''; p.imagenes = []; });
+      c.productos[0].imagenes = [fotoDeTamano(700, 1300)];
+      c.productos[0].imagen   = c.productos[0].imagenes[0];
+      sembrar(c);
+
+      return abrirPaginaAncho('../index.html', 1024, 700).then(function (f) {
+        var d = f.contentDocument;
+        dedo(f, d.querySelector('.carrusel img'), 0);
+
+        return esperarA(function () {
+          var img = d.querySelector('.visor__foto');
+          return img && img.naturalWidth > 0 && img.getBoundingClientRect().width > 0;
+        }, 'el visor no abrió o la foto no cargó', 4000).then(function () {
+          var r = d.querySelector('.visor__foto').getBoundingClientRect();
+          esperar(Math.round(r.width)).aSerMenorQue(1025);
+          esperar(Math.round(r.height)).aSerMenorQue(701);
+
+          /* y el pie con el botón de pedir tiene que seguir a la vista */
+          esperar(Math.round(d.querySelector('.visor__pie').getBoundingClientRect().bottom))
+            .aSerMenorQue(701);
         });
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
