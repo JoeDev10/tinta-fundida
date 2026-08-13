@@ -151,6 +151,17 @@ vertical, horizontal o cuadrada. Si sobra lugar a los costados queda fondo
 oscuro, que es el color del sitio y no se nota. O sea: subila como salió, que
 no vas a perder la mitad de la pieza.
 
+**El cliente puede tocar la foto y verla en grande.** Se abre a pantalla
+completa, con el nombre, el precio y el botón de WhatsApp ahí mismo: si le
+gustó lo que ve, escribe sin tener que volver atrás. Si la pieza tiene varias
+fotos, las pasa con el dedo sin cerrar.
+
+Por eso conviene que la foto principal se entienda sola, pero también que las
+otras muestren el detalle de cerca: ahora se ven de verdad. Las fotos que
+subiste antes de agosto de 2026 se guardaron más chicas y a pantalla completa
+se ven un poco blandas; si tenés una pieza que vende bien, vale la pena
+volver a subirle las fotos.
+
 **El espacio ya no es un problema.** Antes había un tope de 5 MB para todo
 —unas 25 fotos— porque las fotos vivían adentro del navegador. Ahora van al
 servidor, donde hay 1 GB: son miles.

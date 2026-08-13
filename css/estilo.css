@@ -766,6 +766,27 @@ h1,h2,h3,h4{
 }
 .carrusel__punto.activo{ background:var(--lime); transform:scale(1.25); }
 
+/* la foto se puede agrandar: que el puntero lo diga */
+.carrusel img{ cursor:zoom-in; }
+
+/* Botón de agrandar. Tocar la foto ya la abre, así que esto no es la
+   forma principal de llegar: existe para el que navega con teclado o
+   lector de pantalla, que no tiene cómo "tocar" nada. Por eso queda
+   invisible hasta que se lo enfoca o se pasa el mouse, pero sigue
+   estando en el orden de tabulación. Va abajo a la derecha: arriba
+   está el rótulo de Destacado y al medio las flechas del carrusel. */
+.producto__ampliar{
+  position:absolute; inset:auto 8px 8px auto; z-index:3;
+  width:30px; height:30px; display:grid; place-items:center;
+  background:rgba(6,7,11,.72); border:1px solid var(--line-hot);
+  color:var(--txt); font-size:.85rem; line-height:1;
+  opacity:0; transition:opacity .22s var(--ease), border-color .2s, color .2s;
+}
+.producto:hover .producto__ampliar,
+.producto__ampliar:focus-visible{ opacity:1; }
+.producto__ampliar:hover{ border-color:var(--lime); color:var(--lime); }
+.producto__ampliar:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+
 /* placeholder cuando no hay foto */
 .marcador{
   position:absolute; inset:0; display:grid; place-items:center;
@@ -818,6 +839,112 @@ h1,h2,h3,h4{
   grid-column:1/-1; text-align:center; padding:4rem 1rem;
   border:1px dashed var(--line-hot); color:var(--txt-dim);
   font-family:var(--f-mono); font-size:.8rem; letter-spacing:.14em; text-transform:uppercase;
+}
+
+/* ============================================================
+   VISOR DE FOTOS
+   ------------------------------------------------------------
+   Pantalla completa y fondo casi negro: acá la pieza es lo único
+   que importa, y cualquier cosa alrededor le compite.
+
+   El z-index es 9500, por encima del grano (9000). Es la única
+   parte del sitio que se mira de cerca, y no tiene por qué
+   llevar una textura de ruido encima.
+   ============================================================ */
+
+/* mientras el visor está abierto la página de atrás no se mueve:
+   si no, se cierra el visor y uno apareció en otro lado */
+.sin-scroll{ overflow:hidden; }
+
+.visor{
+  position:fixed; inset:0; z-index:9500;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  grid-template-rows:1fr auto;
+  align-items:center;
+  gap:.5rem;
+  padding:clamp(.75rem, 3vw, 2rem);
+  background:rgba(3,4,7,.94);
+  -webkit-backdrop-filter:blur(6px);
+  backdrop-filter:blur(6px);
+}
+.visor[hidden]{ display:none; }
+
+.visor__marco{
+  grid-column:2; grid-row:1;
+  display:grid; place-items:center;
+  min-width:0; min-height:0; height:100%;
+}
+.visor__foto{
+  max-width:100%; max-height:100%;
+  width:auto; height:auto;
+  object-fit:contain;
+  /* la pieza se recorta contra el fondo: sin esto, una foto con fondo
+     oscuro se funde con el visor y no se sabe dónde termina */
+  border:1px solid var(--line);
+}
+
+.visor__cerrar{
+  grid-column:3; grid-row:1; align-self:start;
+  width:40px; height:40px; display:grid; place-items:center;
+  background:rgba(6,7,11,.8); border:1px solid var(--line-hot);
+  color:var(--txt); font-size:1rem; line-height:1;
+  transition:border-color .2s, color .2s;
+}
+.visor__cerrar:hover{ border-color:var(--magenta); color:var(--magenta); }
+
+.visor__flecha{
+  width:44px; height:64px; display:grid; place-items:center;
+  background:rgba(6,7,11,.8); border:1px solid var(--line-hot);
+  color:var(--txt); font-size:1.5rem; line-height:1;
+  transition:border-color .2s, color .2s;
+}
+.visor__flecha--antes  { grid-column:1; grid-row:1; }
+.visor__flecha--despues{ grid-column:3; grid-row:1; }
+.visor__flecha:hover{ border-color:var(--lime); color:var(--lime); }
+.visor__flecha[hidden]{ display:none; }
+
+.visor__pie{
+  grid-column:1/-1; grid-row:2;
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:.9rem 1.2rem;
+  padding-top:.9rem; border-top:1px solid var(--line);
+}
+.visor__datos{ display:flex; align-items:baseline; gap:.9rem; min-width:0; }
+.visor__nombre{
+  font-family:var(--f-display); font-weight:600; font-size:1.05rem; color:var(--txt-hi);
+}
+.visor__precio{
+  font-family:var(--f-display); font-weight:600; color:var(--lime); font-size:1rem;
+}
+
+.visor__puntos{ display:flex; gap:7px; }
+.visor__punto{
+  width:8px; height:8px; padding:0; border-radius:50%;
+  background:rgba(255,255,255,.32); border:1px solid rgba(255,255,255,.16);
+  transition:background .2s, transform .2s;
+}
+.visor__punto.activo{ background:var(--lime); transform:scale(1.25); }
+
+.visor__pedir{
+  font-family:var(--f-mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+  padding:.7rem 1.2rem; background:var(--lime); color:var(--void); font-weight:600;
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  transition:box-shadow .25s;
+}
+.visor__pedir:hover{ box-shadow:0 0 22px rgba(184,255,41,.4); }
+.visor__pedir[hidden]{ display:none; }
+
+/* En celular las flechas laterales se comen el ancho de la foto, que es
+   lo único que se vino a ver. Ahí se pasa el dedo, que además es el
+   gesto que ya se usaba en la tarjeta. */
+@media (max-width:640px){
+  .visor{ grid-template-columns:1fr auto; }
+  .visor__marco{ grid-column:1/-1; }
+  .visor__cerrar{ grid-column:2; }
+  .visor__flecha{ display:none; }
+  .visor__pie{ justify-content:center; text-align:center; }
+  .visor__pedir{ width:100%; text-align:center; }
 }
 
 /* ============================================================

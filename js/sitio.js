@@ -234,6 +234,16 @@
      ========================================================== */
   var visibles = (datos.productos || []).filter(function (p) { return p.visible !== false; });
 
+  /* Lo que hay pintado en la grilla ahora mismo. El visor lo necesita
+     para saber de qué pieza son las fotos que muestra, y cambia cada
+     vez que se toca un filtro.
+
+     Se declara ACÁ y no al lado de pintarProductos(): la primera pintada
+     ocurre unas líneas más abajo, y una declaración con valor puesta
+     después de esa llamada corre después, pisando la lista recién
+     cargada con un arreglo vacío. El visor se abría contra la nada. */
+  var pintados = [];
+
   if (datos.secciones.catalogo && visibles.length) {
     $('#catalogo').hidden = false;
 
@@ -264,12 +274,22 @@
     });
   }
 
+  /* El mismo texto lo arma la tarjeta y lo arma el visor. Vive en un
+     solo lado para que no se separen: si el de la tarjeta dijera el
+     precio y el del visor no, el dueño recibiría dos mensajes distintos
+     por la misma pieza sin entender por qué. */
+  function mensajePedido(p) {
+    return 'Hola! Me interesa "' + p.nombre + '"' +
+           (p.precio ? ' (' + p.precio + ')' : '') + '. ¿Está disponible?';
+  }
+
   function pintarProductos(cat) {
     var lista = cat === 'Todo'
       ? visibles
       : visibles.filter(function (p) { return p.categoria === cat; });
 
     var cont = $('#grilla');
+    pintados = lista;
 
     if (!lista.length) {
       cont.innerHTML = '<p class="vacio">No hay piezas en esta categoría todavía</p>';
@@ -277,8 +297,7 @@
     }
 
     cont.innerHTML = lista.map(function (p, i) {
-      var msg = 'Hola! Me interesa "' + p.nombre + '"' +
-                (p.precio ? ' (' + p.precio + ')' : '') + '. ¿Está disponible?';
+      var msg = mensajePedido(p);
 
       var fotos = fotosDe(p);
 
@@ -314,11 +333,19 @@
             : '');
       }
 
-      return '<article class="tarjeta producto" data-reveal style="--delay:' + ((i % 3) * 90) + 'ms">' +
+      return '<article class="tarjeta producto" data-reveal data-pieza="' + i + '"' +
+             ' style="--delay:' + ((i % 3) * 90) + 'ms">' +
         '<div class="producto__foto' + (fotos.length > 1 ? ' producto__foto--varias' : '') + '">' +
           (p.categoria ? '<span class="producto__chip">' + esc(p.categoria) + '</span>' : '') +
           (p.destacado ? '<span class="producto__destacado">Destacado</span>' : '') +
           foto +
+          /* Tocar la foto ya la abre; este botón existe para quien no
+             puede tocarla —el que navega con el teclado o con un lector
+             de pantalla—, que si no se quedaba sin manera de agrandarla. */
+          (fotos.length
+            ? '<button class="producto__ampliar" type="button" data-ampliar' +
+              ' aria-label="Ver las fotos de ' + esc(p.nombre) + ' más grandes">⤢</button>'
+            : '') +
         '</div>' +
         '<div class="producto__cuerpo">' +
           '<h3>' + esc(p.nombre) + '</h3>' +
@@ -387,6 +414,241 @@
         pt.classList.toggle('activo', n === actual);
       });
     }, true);   /* en captura: el scroll no burbujea */
+  })();
+
+  /* ==========================================================
+     VISOR DE FOTOS
+     ------------------------------------------------------------
+     En la tarjeta la foto se ve a unos 285px, cuando el archivo
+     guardado tiene 1600. Se estaba mostrando menos de la quinta
+     parte de lo que hay, y lo que se pierde es justo el acabado de
+     la pieza: las capas, la textura, el color real. Eso es lo que
+     el visitante mira antes de decidir si escribe.
+
+     El botón de WhatsApp va adentro del visor a propósito. El
+     momento de más ganas de escribir es mirando la foto grande; si
+     para eso hubiera que cerrar, buscar la tarjeta y recién ahí
+     tocar el botón, parte de esos mensajes no llegan.
+
+     Lo delicado acá no es el visor sino convivir con el carrusel:
+     la misma foto se arrastra para pasar a la siguiente y se toca
+     para agrandarla. Si un arrastre corto contara como toque, el
+     visitante intentaría pasar de foto y le saltaría el visor en la
+     cara. Por eso se mide cuánto se movió el dedo antes de soltar.
+     ========================================================== */
+  (function () {
+    var grilla = $('#grilla');
+    if (!grilla) return;
+
+    var visor, foto, nombre, precio, pedir, puntos, marco;
+    var fotos = [], indice = 0, abierto = false;
+    var vueltaAlFoco = null, carruselOrigen = null, empujeHistoria = false;
+
+    /* se arma la primera vez que se abre: quien nunca toca una foto no
+       paga el costo de tener esto en el documento */
+    function construir() {
+      if (visor) return;
+
+      visor = el('div', 'visor');
+      visor.hidden = true;
+      visor.setAttribute('role', 'dialog');
+      visor.setAttribute('aria-modal', 'true');
+      visor.setAttribute('aria-label', 'Foto de la pieza');
+      visor.innerHTML =
+        '<button class="visor__cerrar" type="button" data-cerrar aria-label="Cerrar">✕</button>' +
+        '<button class="visor__flecha visor__flecha--antes" type="button" data-paso="-1" aria-label="Foto anterior">‹</button>' +
+        '<div class="visor__marco"><img class="visor__foto" alt=""></div>' +
+        '<button class="visor__flecha visor__flecha--despues" type="button" data-paso="1" aria-label="Foto siguiente">›</button>' +
+        '<div class="visor__pie">' +
+          '<div class="visor__datos">' +
+            '<strong class="visor__nombre"></strong>' +
+            '<span class="visor__precio"></span>' +
+          '</div>' +
+          '<div class="visor__puntos"></div>' +
+          '<a class="visor__pedir" target="_blank" rel="noopener">Pedir por WhatsApp</a>' +
+        '</div>';
+      document.body.appendChild(visor);
+
+      marco  = $('.visor__marco', visor);
+      foto   = $('.visor__foto', visor);
+      nombre = $('.visor__nombre', visor);
+      precio = $('.visor__precio', visor);
+      pedir  = $('.visor__pedir', visor);
+      puntos = $('.visor__puntos', visor);
+
+      visor.addEventListener('click', function (ev) {
+        if (ev.target.closest('[data-cerrar]')) return cerrar();
+        var b = ev.target.closest('[data-paso], [data-ira]');
+        if (b) {
+          return mostrar(b.dataset.ira !== undefined
+            ? +b.dataset.ira
+            : indice + (+b.dataset.paso));
+        }
+        /* tocar el fondo cierra; tocar la foto o el pie, no */
+        if (!ev.target.closest('.visor__marco, .visor__pie')) cerrar();
+      });
+
+      /* deslizar entre las fotos también acá adentro */
+      var desde = null;
+      marco.addEventListener('pointerdown', function (ev) {
+        desde = { x: ev.clientX, y: ev.clientY };
+      });
+      marco.addEventListener('pointerup', function (ev) {
+        if (!desde) return;
+        var dx = ev.clientX - desde.x;
+        var dy = ev.clientY - desde.y;
+        desde = null;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+          mostrar(indice + (dx < 0 ? 1 : -1));
+        }
+      });
+      marco.addEventListener('pointercancel', function () { desde = null; });
+    }
+
+    function mostrar(n) {
+      if (!fotos.length) return;
+      indice = Math.max(0, Math.min(n, fotos.length - 1));
+      foto.src = fotos[indice];
+      foto.alt = nombre.textContent +
+                 (fotos.length > 1 ? ' · foto ' + (indice + 1) + ' de ' + fotos.length : '');
+
+      Array.prototype.forEach.call(puntos.children, function (pt, i) {
+        pt.classList.toggle('activo', i === indice);
+      });
+
+      /* la de al lado, lista para cuando la pidan */
+      [indice - 1, indice + 1].forEach(function (i) {
+        if (fotos[i]) { var pre = new Image(); pre.src = fotos[i]; }
+      });
+    }
+
+    function abrir(iPieza, iFoto, carrusel) {
+      var p = pintados[iPieza];
+      if (!p) return;
+      var lista = fotosDe(p);
+      if (!lista.length) return;
+
+      construir();
+      fotos = lista;
+      carruselOrigen = carrusel || null;
+      vueltaAlFoco = document.activeElement;
+
+      nombre.textContent = p.nombre;
+      precio.textContent = p.precio || 'Consultar';
+
+      if (hayWhatsapp) {
+        pedir.href = linkWhatsapp(mensajePedido(p));
+        pedir.hidden = false;
+      } else {
+        pedir.hidden = true;
+      }
+
+      puntos.innerHTML = fotos.length > 1
+        ? fotos.map(function (u, i) {
+            return '<button class="visor__punto" type="button" data-ira="' + i +
+                   '" aria-label="Ver la foto ' + (i + 1) + '"></button>';
+          }).join('')
+        : '';
+
+      Array.prototype.forEach.call(visor.querySelectorAll('.visor__flecha'), function (fl) {
+        fl.hidden = fotos.length < 2;
+      });
+
+      visor.hidden = false;
+      document.documentElement.classList.add('sin-scroll');
+      abierto = true;
+      mostrar(iFoto || 0);
+      $('.visor__cerrar', visor).focus();
+
+      /* que el botón "atrás" del celular cierre el visor en vez de
+         sacar al visitante del sitio */
+      try {
+        history.pushState({ visor: 1 }, '');
+        empujeHistoria = true;
+      } catch (e) { empujeHistoria = false; }
+    }
+
+    function cerrarYa() {
+      abierto = false;
+      visor.hidden = true;
+      document.documentElement.classList.remove('sin-scroll');
+      foto.removeAttribute('src');
+
+      /* la tarjeta queda en la foto que se estaba mirando: volver y ver
+         otra distinta de la que uno dejó se siente un salto */
+      if (carruselOrigen && carruselOrigen.children[indice]) {
+        var hijo = carruselOrigen.children[indice];
+        carruselOrigen.scrollLeft = hijo.offsetLeft - carruselOrigen.offsetLeft;
+      }
+      carruselOrigen = null;
+
+      if (vueltaAlFoco && vueltaAlFoco.focus) vueltaAlFoco.focus();
+      vueltaAlFoco = null;
+    }
+
+    function cerrar() {
+      if (!abierto) return;
+      if (empujeHistoria) {
+        empujeHistoria = false;
+        history.back();          /* dispara popstate, que llama a cerrarYa */
+        return;
+      }
+      cerrarYa();
+    }
+
+    window.addEventListener('popstate', function () {
+      empujeHistoria = false;
+      if (abierto) cerrarYa();
+    });
+
+    document.addEventListener('keydown', function (ev) {
+      if (!abierto) return;
+      if (ev.key === 'Escape')     { ev.preventDefault(); cerrar(); }
+      if (ev.key === 'ArrowLeft')  mostrar(indice - 1);
+      if (ev.key === 'ArrowRight') mostrar(indice + 1);
+    });
+
+    /* --- abrir desde la tarjeta ---------------------------------
+       Un toque abre; un arrastre pasa de foto y no abre nada. La
+       diferencia se mide en píxeles recorridos, no en tiempo: en un
+       celular el dedo casi nunca sale limpio, pero moverse 10px es
+       arrastrar en cualquier mano. */
+    var apoyo = null;
+
+    grilla.addEventListener('pointerdown', function (ev) {
+      var img = ev.target.closest('.carrusel img');
+      apoyo = img ? { x: ev.clientX, y: ev.clientY, img: img } : null;
+    });
+
+    grilla.addEventListener('pointercancel', function () { apoyo = null; });
+
+    grilla.addEventListener('pointerup', function (ev) {
+      if (!apoyo) return;
+      var img = ev.target.closest('.carrusel img');
+      var corrido = Math.abs(ev.clientX - apoyo.x) + Math.abs(ev.clientY - apoyo.y);
+      var mismo = img && img === apoyo.img;
+      apoyo = null;
+      if (!mismo || corrido > 10) return;
+      abrirDesde(img);
+    });
+
+    /* el botón de agrandar: acá no hay arrastre que valga, abre y listo */
+    grilla.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-ampliar]');
+      if (!b) return;
+      var caja = b.closest('.producto__foto');
+      var carrusel = caja && caja.querySelector('[data-carrusel]');
+      var primera = carrusel && carrusel.querySelector('img');
+      if (primera) abrirDesde(primera);
+    });
+
+    function abrirDesde(img) {
+      var carrusel = img.parentNode;
+      var tarjeta = img.closest('[data-pieza]');
+      if (!tarjeta) return;
+      var iFoto = Array.prototype.indexOf.call(carrusel.children, img);
+      abrir(+tarjeta.dataset.pieza, Math.max(0, iFoto), carrusel);
+    }
   })();
 
   /* ==========================================================

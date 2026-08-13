@@ -1796,6 +1796,93 @@
         esperar(carrusel.scrollWidth).aSerMayorQue(carrusel.clientWidth);
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
+
+    /* --- el visor de fotos -------------------------------------
+       Lo delicado del visor no es abrirse: es no abrirse cuando el
+       visitante estaba pasando de foto. La misma imagen se toca para
+       agrandarla y se arrastra para correr el carrusel, así que las
+       dos pruebas de abajo son las dos mitades de lo mismo. */
+    function unaPiezaConFotos(cuantas) {
+      var c = contenidoBase();
+      c.productos.forEach(function (p) { p.imagen = ''; p.imagenes = []; });
+      c.productos[0].imagenes = pixeles(cuantas);
+      c.productos[0].imagen   = c.productos[0].imagenes[0];
+      sembrar(c);
+      return c;
+    }
+
+    /* un dedo que baja y sube; `corrido` es cuánto se movió mientras tanto */
+    function dedo(f, elem, corrido) {
+      var W = f.contentWindow;
+      elem.dispatchEvent(new W.PointerEvent('pointerdown',
+        { bubbles: true, clientX: 100, clientY: 100 }));
+      elem.dispatchEvent(new W.PointerEvent('pointerup',
+        { bubbles: true, clientX: 100 + (corrido || 0), clientY: 100 }));
+    }
+
+    prueba('tocar la foto la abre en grande con los datos de esa pieza', function () {
+      var c = unaPiezaConFotos(3);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+
+        /* el visor no existe hasta que hace falta */
+        esperar(!!d.querySelector('.visor')).aSerFalso();
+
+        dedo(f, d.querySelector('.carrusel img'), 2);
+
+        return esperarA(function () {
+          var v = d.querySelector('.visor');
+          return v && !v.hidden;
+        }, 'el visor no se abrió al tocar la foto', 3000).then(function () {
+          var v = d.querySelector('.visor');
+          esperar(v.querySelector('.visor__nombre').textContent).aSer(c.productos[0].nombre);
+          esperar(v.querySelector('.visor__precio').textContent)
+            .aSer(c.productos[0].precio || 'Consultar');
+          esperar(v.querySelectorAll('.visor__punto').length).aSer(3);
+
+          /* el pedido sale desde adentro del visor y con esta pieza */
+          esperar(v.querySelector('.visor__pedir').getAttribute('href'))
+            .aContener(encodeURIComponent(c.productos[0].nombre));
+
+          /* la página de atrás no se mueve mientras se mira la foto */
+          esperar(d.documentElement.classList.contains('sin-scroll')).aSerVerdadero();
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('arrastrar para pasar de foto no abre el visor', function () {
+      /* La mitad que importa. Si esto se rompe, el visitante intenta ver
+         la foto siguiente y le salta el visor a la cara. */
+      unaPiezaConFotos(3);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument;
+        dedo(f, d.querySelector('.carrusel img'), 45);
+        return esperarUnPoco(300).then(function () {
+          var v = d.querySelector('.visor');
+          esperar(!!(v && !v.hidden)).aSerFalso();
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('el visor cierra con Escape y devuelve el scroll', function () {
+      unaPiezaConFotos(2);
+      return abrirPagina('../index.html').then(function (f) {
+        var d = f.contentDocument, W = f.contentWindow;
+        dedo(f, d.querySelector('.carrusel img'), 0);
+
+        return esperarA(function () {
+          var v = d.querySelector('.visor');
+          return v && !v.hidden;
+        }, 'el visor no se abrió', 3000).then(function () {
+          d.dispatchEvent(new W.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          /* cerrar pasa por history.back(), que tarda un momento en llegar */
+          return esperarA(function () {
+            return d.querySelector('.visor').hidden &&
+                   !d.documentElement.classList.contains('sin-scroll');
+          }, 'el visor no cerró con Escape', 3000);
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
   });
 
   /* ==========================================================
