@@ -3,7 +3,9 @@
 /* ============================================================
    VOLTA 3D · sistema visual
    Concepto: la página se construye capa por capa, como una
-   impresión. Scanlines = líneas de capa. Neón industrial.
+   impresión. Grano, grilla y neón industrial. El rayado de
+   scanlines se sacó: sobre las fotos del catálogo tapaba la
+   pieza, y una capa fija no se puede excluir de una sola zona.
    ============================================================ */
 
 :root{
@@ -72,24 +74,20 @@ button{ font:inherit; color:inherit; cursor:pointer; }
    ATMÓSFERA · scanlines + grano + grilla
    ============================================================ */
 
-.capa-scan,
+/* Acá vivía `.capa-scan`: un rayado negro fijo sobre TODA la pantalla,
+   una línea cada 4px al 50% y en modo multiply. Era la idea del diseño
+   —la página impresa por capas— pero se comía las fotos del catálogo,
+   que es lo que el negocio vende.
+
+   No se podía sacar solo de ahí: al ser una capa fija por encima de
+   todo, o estaba entera o no estaba. Subir las tarjetas por arriba de
+   ella las habría puesto también por arriba de la barra de navegación.
+
+   La atmósfera sigue en pie con el grano, la grilla del fondo y el
+   neón; lo que se fue es el velo que oscurecía las fotos. */
+
 .capa-grano{
   position:fixed; inset:0; pointer-events:none; z-index:9000;
-}
-
-.capa-scan{
-  background:repeating-linear-gradient(
-    to bottom,
-    rgba(0,0,0,0) 0px,
-    rgba(0,0,0,0) 2px,
-    rgba(0,0,0,.28) 3px,
-    rgba(0,0,0,.28) 4px
-  );
-  mix-blend-mode:multiply;
-  opacity:.5;
-}
-
-.capa-grano{
   opacity:.055;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
 }
