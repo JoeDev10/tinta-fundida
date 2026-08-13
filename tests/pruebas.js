@@ -248,10 +248,17 @@
     };
   }
 
-  function abrirPanel() {
+  /* `ajustar` deja romper algún método de la nube ANTES de entrar, para
+     las pruebas de servidor caído. Sin argumento se comporta igual que
+     siempre, así que las que ya existían no se enteran. Romperla después
+     de abierto el panel no necesita esto: alcanza con pisar el método en
+     p.win.NUBE_PANEL. */
+  function abrirPanel(ajustar) {
     return abrirPagina('../admin.html').then(function (f) {
       var w = f.contentWindow, d = f.contentDocument;
-      w.NUBE_PANEL = nubeFalsa();
+      var nube = nubeFalsa();
+      if (ajustar) ajustar(nube);
+      w.NUBE_PANEL = nube;
       d.querySelector('#mail').value  = 'prueba@local';
       d.querySelector('#clave').value = 'lo-que-sea';
       d.querySelector('#form-acceso').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
@@ -1561,6 +1568,164 @@
       return abrirPanel().then(function (p) {
         esperar(p.doc.querySelector('#barra-mail').textContent).aSer('prueba@local');
       });
+    });
+
+    /* --- cuando el servidor falla ------------------------------
+       Lo que sigue no prueba que el panel funcione, sino que se porte
+       bien cuando el servidor NO funciona. Es el momento en que el
+       dueño más necesita entender qué pasó: está cargando piezas desde
+       el celular, se le corta el internet a mitad de camino y tiene que
+       saber si lo que escribió se perdió o no.
+
+       Dos cosas se miran siempre: que avise —el punto de arriba y el
+       cartel— y que no le coma el trabajo. */
+
+    prueba('si el servidor no contesta al entrar, el panel abre igual', function () {
+      /* Trabado en una pantalla de acceso sería lo peor: no puede mirar
+         ni corregir nada. Entra con lo último que vio esta computadora,
+         y el cartel le dice de dónde salió lo que está viendo. */
+      limpiar();
+      return abrirPanel(function (nube) {
+        nube.traerContenido = function () {
+          return Promise.reject(new Error('no hay internet'));
+        };
+      }).then(function (p) {
+        esperar(p.doc.querySelector('#panel').classList.contains('activo')).aSerVerdadero();
+
+        var t = p.doc.querySelector('#toast');
+        esperar(t.className).aContener('error');
+        esperar(t.textContent).aContener('esta computadora');
+        esperar(t.textContent).aContener('no hay internet');
+
+        /* y el catálogo se ve: se puede mirar y corregir sin conexión */
+        esperar(p.doc.querySelectorAll('#grilla-admin .prod-card').length).aSerMayorQue(0);
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('si falla el guardado, avisa y el cambio no se pierde', function () {
+      /* El punto de arriba tiene que salir de "Guardando…". Si se
+         quedara ahí, el dueño se va convencido de que guardó. */
+      limpiar();
+      var panel;
+      return abrirPanel().then(function (p) {
+        panel = p;
+        p.win.NUBE_PANEL.guardarContenido = function () {
+          return Promise.reject(new Error('se cayó el servidor'));
+        };
+
+        var campo = p.doc.querySelector('#m-nombre');
+        campo.value = 'Nombre Que No Sube';
+        campo.dispatchEvent(new Event('input', { bubbles: true }));
+
+        return esperarA(function () {
+          return p.doc.querySelector('#estado-txt').textContent === 'Sin guardar';
+        }, 'el estado nunca dejó de decir Guardando…', 5000);
+      }).then(function () {
+        var t = panel.doc.querySelector('#toast');
+        esperar(t.className).aContener('error');
+        esperar(t.textContent).aContener('se cayó el servidor');
+
+        /* lo escrito sigue en esta computadora: el trabajo no se perdió */
+        var g = JSON.parse(localStorage.getItem(LS_CONTENIDO) || '{}');
+        esperar(g.marca.nombre).aSer('Nombre Que No Sube');
+
+        /* y en la pantalla también, para poder reintentar */
+        esperar(panel.doc.querySelector('#m-nombre').value).aSer('Nombre Que No Sube');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('cuando el servidor vuelve, el guardado siguiente entra', function () {
+      /* Una caída no puede dejar el panel roto hasta recargar: el dueño
+         no sabe que existe esa opción. */
+      limpiar();
+      var panel;
+      return abrirPanel().then(function (p) {
+        panel = p;
+        var real = p.win.NUBE_PANEL.guardarContenido;
+        p.win.NUBE_PANEL.guardarContenido = function () {
+          return Promise.reject(new Error('caído'));
+        };
+
+        var campo = p.doc.querySelector('#m-nombre');
+        campo.value = 'Durante la caída';
+        campo.dispatchEvent(new Event('input', { bubbles: true }));
+
+        return esperarA(function () {
+          return p.doc.querySelector('#estado-txt').textContent === 'Sin guardar';
+        }, 'no llegó a marcar Sin guardar', 5000).then(function () {
+          p.win.NUBE_PANEL.guardarContenido = real;   /* vuelve el servidor */
+          campo.value = 'Ya con servidor';
+          campo.dispatchEvent(new Event('input', { bubbles: true }));
+          return esperarA(function () {
+            return p.doc.querySelector('#estado-txt').textContent === 'Guardado';
+          }, 'no volvió a guardar cuando el servidor se recuperó', 5000);
+        });
+      }).then(function () {
+        var g = JSON.parse(localStorage.getItem(LS_CONTENIDO) || '{}');
+        esperar(g.marca.nombre).aSer('Ya con servidor');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('si falla la subida de la foto, avisa y no deja una foto rota', function () {
+      /* Peor que no subir la foto sería dejar el producto apuntando a una
+         dirección que no existe: la tarjeta quedaría con el cuadrito roto
+         en el sitio, a la vista de los clientes. */
+      var c = contenidoBase();
+      c.productos[0].imagen = '';  c.productos[0].imagenes = [];
+      sembrar(c);
+
+      var panel;
+      return abrirPanel(function (nube) {
+        nube.subirFoto = function () {
+          return Promise.reject(new Error('no se pudo subir'));
+        };
+      }).then(function (p) {
+        panel = p;
+        return fotoDePrueba(800, 600, 'falla.jpg');
+      }).then(function (archivo) {
+        panel.doc.querySelector('[data-pfoto="0"]').click();
+        ponerArchivos(panel.doc.querySelector('#archivo-rapido'), [archivo]);
+
+        return esperarA(function () {
+          var t = panel.doc.querySelector('#toast');
+          return t.className.indexOf('error') !== -1 &&
+                 t.textContent.indexOf('no se pudo subir') !== -1;
+        }, 'no avisó que la foto no se pudo subir', 6000);
+      }).then(function () {
+        /* el producto sigue sin foto, no con una rota */
+        var g = JSON.parse(localStorage.getItem(LS_CONTENIDO) || '{}');
+        var p0 = g.productos[0];
+        esperar(p0.imagen || '').aSer('');
+        esperar((p0.imagenes || []).length).aSer(0);
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('una clave equivocada no abre el panel ni deja la clave escrita', function () {
+      /* El panel se abre desde el celular y a veces prestado. Si al
+         errarle quedara la contraseña en el campo, el que mire después
+         la ve. */
+      limpiar();
+      return abrirPagina('../admin.html').then(function (f) {
+        var w = f.contentWindow, d = f.contentDocument;
+        var nube = nubeFalsa();
+        nube.entrar = function () {
+          return Promise.reject(new Error('Mail o contraseña incorrectos'));
+        };
+        w.NUBE_PANEL = nube;
+
+        d.querySelector('#mail').value  = 'prueba@local';
+        d.querySelector('#clave').value = 'la-equivocada';
+        d.querySelector('#form-acceso')
+         .dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+
+        return esperarA(function () {
+          return d.querySelector('#error-acceso').textContent.indexOf('incorrectos') !== -1;
+        }, 'no mostró el error de acceso', 4000).then(function () {
+          esperar(d.querySelector('#panel').classList.contains('activo')).aSerFalso();
+          esperar(d.querySelector('#clave').value).aSer('');
+          esperar(d.querySelector('#txt-entrar').textContent).aSer('Entrar');
+        });
+      }).then(limpiar, function (e) { limpiar(); throw e; });
     });
   });
 
