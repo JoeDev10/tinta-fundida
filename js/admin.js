@@ -263,8 +263,155 @@
       .then(entrar);
   }
 
-  /* Sesión abierta de antes: no se vuelve a pedir la contraseña. */
-  if (window.NUBE_PANEL && NUBE_PANEL.sesion()) cargarYEntrar();
+  /* ==========================================================
+     ME OLVIDÉ LA CONTRASEÑA
+     ------------------------------------------------------------
+     Antes esto se arreglaba a mano: el dueño le escribía a quien le
+     armó el sitio y esperaba. Un domingo a la noche eso es quedarse
+     afuera del propio negocio.
+
+     Lo raro era que el camino existía a medias. Supabase mandaba el
+     correo y el link llegaba bien, pero caía en esta página, que no
+     tenía ninguna pantalla para escribir la contraseña nueva: el
+     dueño tocaba el link y no pasaba nada. Eso confunde más que si no
+     existiera. Esa pantalla es lo que faltaba.
+     ========================================================== */
+  var tokenNueva = null;
+
+  /* Supabase devuelve al dueño acá con el permiso colgado después del
+     #. Esa parte de la dirección no viaja al servidor, y se limpia
+     apenas se lee para que no quede en la barra ni en el historial. */
+  function tokenDeRecuperacion() {
+    var h = String(location.hash || '').replace(/^#/, '');
+    if (!h) return null;
+    var partes = {};
+    h.split('&').forEach(function (par) {
+      var i = par.indexOf('=');
+      if (i > 0) {
+        partes[decodeURIComponent(par.slice(0, i))] = decodeURIComponent(par.slice(i + 1));
+      }
+    });
+    if (partes.type !== 'recovery' || !partes.access_token) return null;
+    return partes.access_token;
+  }
+
+  function verAcceso(cual) {
+    $('#form-acceso').hidden      = cual !== 'entrar';
+    $('#form-recuperar').hidden   = cual !== 'pedir';
+    $('#form-clave-nueva').hidden = cual !== 'nueva';
+    $('#pie-acceso').hidden       = cual !== 'entrar';
+    $('#subtitulo-acceso').textContent =
+      cual === 'pedir' ? 'Te mandamos un correo para volver a entrar' :
+      cual === 'nueva' ? 'Escribí tu contraseña nueva' :
+                         'Panel de administración';
+  }
+
+  $('#ir-recuperar').addEventListener('click', function () {
+    $('#error-acceso').textContent = '';
+    /* si ya venía escribiendo el mail, que no lo escriba de nuevo */
+    $('#mail-recuperar').value = $('#mail').value.trim();
+    verAcceso('pedir');
+    $('#mail-recuperar').focus();
+  });
+
+  $('#volver-acceso').addEventListener('click', function () {
+    verAcceso('entrar');
+    $('#mail').focus();
+  });
+
+  $('#form-recuperar').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+
+    if (!window.NUBE_PANEL || !NUBE_PANEL.hayNube()) {
+      $('#error-recuperar').textContent = '✕ Falta la configuración del servidor (js/nube.js).';
+      return;
+    }
+
+    var boton = $('#txt-recuperar');
+    boton.textContent = 'Mandando…';
+    $('#error-recuperar').textContent = '';
+    $('#aviso-recuperar').hidden = true;
+
+    /* que vuelva a esta misma página, sin nada colgado de antes */
+    var volverA = location.origin + location.pathname;
+
+    NUBE_PANEL.pedirRecuperacion($('#mail-recuperar').value.trim(), volverA)
+      .then(function () {
+        boton.textContent = 'Mandame el correo';
+        /* El mismo mensaje exista o no exista ese mail. Decir "ese mail
+           no está registrado" dejaría que cualquiera averigüe quién
+           administra el sitio probando direcciones. */
+        var a = $('#aviso-recuperar');
+        a.textContent = 'Si ese mail tiene acceso al panel, en un minuto te llega ' +
+                        'un correo con un link para poner una contraseña nueva. ' +
+                        'Fijate también en el correo no deseado.';
+        a.hidden = false;
+      })
+      .catch(function (err) {
+        boton.textContent = 'Mandame el correo';
+        $('#error-recuperar').textContent = '✕ ' + err.message;
+      });
+  });
+
+  $('#form-clave-nueva').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+
+    var nueva = $('#clave-nueva').value;
+    var otra  = $('#clave-repetida').value;
+    var error = $('#error-clave-nueva');
+    error.textContent = '';
+
+    /* Se avisa acá y no después del viaje al servidor: es lo mismo que
+       va a contestar, pero sin la espera. */
+    if (nueva.length < 6) {
+      error.textContent = '✕ La contraseña tiene que tener al menos 6 caracteres.';
+      return;
+    }
+    /* Se pide dos veces porque no se ve lo que se escribe y no hay
+       vuelta atrás: un dedazo la dejaría afuera hasta pedir otro correo. */
+    if (nueva !== otra) {
+      error.textContent = '✕ Las dos contraseñas no son iguales.';
+      $('#clave-repetida').value = '';
+      $('#clave-repetida').focus();
+      return;
+    }
+
+    var boton = $('#txt-clave-nueva');
+    boton.textContent = 'Guardando…';
+
+    NUBE_PANEL.cambiarClave(tokenNueva, nueva)
+      .then(function () {
+        /* el permiso ya se usó y no sirve más: que no quede en memoria */
+        tokenNueva = null;
+        $('#clave-nueva').value = '';
+        $('#clave-repetida').value = '';
+        boton.textContent = 'Guardar la contraseña';
+        verAcceso('entrar');
+        avisar('Listo: entrá con tu contraseña nueva');
+        $('#clave').focus();
+      })
+      .catch(function (err) {
+        boton.textContent = 'Guardar la contraseña';
+        error.textContent = '✕ ' + err.message;
+      });
+  });
+
+  /* Llegó desde el link del correo: primero la contraseña nueva. Va
+     antes que la sesión guardada a propósito — si entrara solo con una
+     sesión vieja, el dueño tocaría el link del mail y terminaría adentro
+     del panel sin haber cambiado nada, que es justo lo que fue a hacer. */
+  var recuperando = tokenDeRecuperacion();
+  if (recuperando) {
+    tokenNueva = recuperando;
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+    } catch (e) { location.hash = ''; }
+    verAcceso('nueva');
+    $('#clave-nueva').focus();
+  } else if (window.NUBE_PANEL && NUBE_PANEL.sesion()) {
+    /* Sesión abierta de antes: no se vuelve a pedir la contraseña. */
+    cargarYEntrar();
+  }
 
   /* ==========================================================
      ARRANQUE DEL PANEL

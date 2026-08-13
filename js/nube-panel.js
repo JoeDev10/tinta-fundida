@@ -121,6 +121,69 @@
   }
 
   /* ==========================================================
+     ME OLVIDÉ LA CONTRASEÑA
+     ------------------------------------------------------------
+     Dos pasos separados por un mail. Primero se pide el correo de
+     recuperación; después, cuando el dueño vuelve desde el link, se
+     escribe la contraseña nueva con el token que trajo puesto.
+
+     El servidor contesta que sí exista o no exista ese mail, y está
+     bien que así sea: si dijera "ese mail no está registrado",
+     cualquiera podría averiguar quién administra el sitio probando
+     direcciones. Por eso el aviso de arriba es siempre el mismo.
+     ========================================================== */
+  function pedirRecuperacion(mail, volverA) {
+    return pedir('/auth/v1/recover?redirect_to=' + encodeURIComponent(volverA), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: mail })
+    })
+      .catch(errorDeRed)
+      .then(function (r) {
+        if (r.ok) return true;
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          /* Supabase corta los pedidos seguidos para que nadie use esto
+             para mandar correos a mansalva. Es lo único que conviene
+             contar, porque se arregla esperando. */
+          if (r.status === 429) {
+            throw new Error('Pediste el correo hace muy poco. Esperá un ' +
+                            'minuto y probá de nuevo.');
+          }
+          throw new Error(j.msg || j.error_description ||
+                          'No se pudo pedir el correo (' + r.status + ').');
+        });
+      });
+  }
+
+  /* El token sale del link del mail, no de una sesión guardada: el
+     dueño llega acá justamente porque no puede entrar. */
+  function cambiarClave(token, nueva) {
+    return pedir('/auth/v1/user', {
+      method: 'PUT',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ password: nueva })
+    })
+      .catch(errorDeRed)
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (r.ok) return true;
+          if (r.status === 401 || r.status === 403) {
+            throw new Error('El link venció o ya se usó. Pedí el correo de nuevo.');
+          }
+          if (/at least|should be/i.test(j.msg || j.error_description || '')) {
+            throw new Error('La contraseña es muy corta: tiene que tener ' +
+                            'al menos 6 caracteres.');
+          }
+          throw new Error(j.msg || j.error_description ||
+                          'No se pudo cambiar la contraseña (' + r.status + ').');
+        });
+      });
+  }
+
+  /* ==========================================================
      CONTENIDO
      ========================================================== */
   function traerContenido() {
@@ -220,6 +283,8 @@
   window.NUBE_PANEL = {
     entrar: entrar,
     salir: salir,
+    pedirRecuperacion: pedirRecuperacion,
+    cambiarClave: cambiarClave,
     sesion: function () { return sesion; },
     hayNube: function () { return !!(N.url && N.clave); },
     traerContenido: traerContenido,

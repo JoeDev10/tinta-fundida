@@ -21,6 +21,35 @@ body.admin{ background:var(--void-2); }
   letter-spacing:.1em; text-transform:uppercase; margin:.9rem 0 0; min-height:1.1em;
 }
 
+/* El aviso de que salió el correo. Va en verde y en texto normal: no es
+   un error y no hay que leerlo con esfuerzo, es la buena noticia. */
+.acceso__aviso{
+  color:var(--lime); font-size:.82rem; line-height:1.5;
+  margin:.9rem 0 0; padding:.7rem .8rem;
+  background:rgba(184,255,41,.07); border:1px solid rgba(184,255,41,.3);
+}
+.acceso__aviso[hidden]{ display:none; }
+
+/* "Me olvidé la contraseña" y "Volver". Con cara de link y no de botón
+   a propósito: si compitieran con Entrar, la pantalla tendría dos
+   botones iguales y ninguno sería el camino obvio. */
+.acceso__link{
+  display:block; width:100%; margin-top:.9rem; padding:.3rem 0;
+  background:none; border:0;
+  font-family:var(--f-mono); font-size:.68rem;
+  letter-spacing:.12em; text-transform:uppercase;
+  color:var(--txt-dim); text-align:center;
+  transition:color .2s;
+}
+.acceso__link:hover{ color:var(--lime); }
+.acceso__link:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+
+.acceso__caja .acceso__pie{
+  margin-top:1.6rem; font-size:.76rem;
+  border-top:1px solid var(--line); padding-top:1.2rem;
+}
+.acceso__caja .acceso__pie[hidden]{ display:none; }
+
 /* ---------- estructura ---------- */
 .panel{ display:none; position:relative; z-index:1; }
 .panel.activo{ display:block; }

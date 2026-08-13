@@ -94,11 +94,22 @@
     })();
   }
 
+  /* El `test=` va antes del #, no pegado al final. Pegado al final se
+     metía adentro de lo que viene después del numeral, que es donde
+     Supabase manda el permiso para cambiar la contraseña: la prueba
+     habría estado mirando una dirección que el dueño nunca ve. */
+  function conTest(url) {
+    var i = url.indexOf('#');
+    var base = i === -1 ? url : url.slice(0, i);
+    var numeral = i === -1 ? '' : url.slice(i);
+    return base + (base.indexOf('?') === -1 ? '?' : '&') + 'test=' + Date.now() + numeral;
+  }
+
   function abrirPagina(url) {
     return new Promise(function (res, rej) {
       var f = document.createElement('iframe');
       f.style.cssText = 'position:absolute;left:-10000px;top:0;width:1280px;height:900px;border:0';
-      f.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'test=' + Date.now();
+      f.src = conTest(url);
       var listo = false;
       f.onload = function () { listo = true; esperarPintado(f, res, rej, url); };
       f.onerror = function () { rej(new Error('no cargó ' + url)); };
@@ -116,7 +127,7 @@
       var f = document.createElement('iframe');
       f.style.cssText = 'position:absolute;left:-10000px;top:0;border:0;width:' +
                         ancho + 'px;height:' + alto + 'px';
-      f.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'test=' + Date.now();
+      f.src = conTest(url);
       f.onload = function () { esperarPintado(f, res, rej, url); };
       f.onerror = function () { rej(new Error('no cargó ' + url)); };
       setTimeout(function () { rej(new Error('tardó demasiado: ' + url)); }, 8000);
@@ -1702,6 +1713,158 @@
       }).then(limpiar, function (e) { limpiar(); throw e; });
     });
 
+    /* --- me olvidé la contraseña -------------------------------
+       Estas abren admin.html sin entrar, porque el dueño llega acá
+       justamente porque no puede entrar. El nube-panel.js que corre es
+       el de verdad; cada prueba le pisa el método que va a usar ANTES
+       de mandar el formulario, así no sale ningún pedido a Supabase ni
+       ningún correo de verdad. */
+    var LS_SESION_NUBE = 'tinta-fundida:sesion-nube';
+
+    function abrirAcceso(numeral) {
+      try { localStorage.removeItem(LS_SESION_NUBE); } catch (e) {}
+      return abrirPagina('../admin.html' + (numeral || '')).then(function (f) {
+        return { marco: f, win: f.contentWindow, doc: f.contentDocument };
+      });
+    }
+
+    var LINK_DEL_CORREO = '#access_token=token-del-mail&type=recovery&expires_in=3600';
+
+    prueba('el link del correo lleva a poner la contraseña nueva', function () {
+      return abrirAcceso(LINK_DEL_CORREO).then(function (p) {
+        var d = p.doc;
+        esperar(d.querySelector('#form-clave-nueva').hidden).aSerFalso();
+        esperar(d.querySelector('#form-acceso').hidden).aSerVerdadero();
+        esperar(d.querySelector('#subtitulo-acceso').textContent).aContener('contraseña nueva');
+
+        /* el permiso no puede quedar colgado en la barra de direcciones:
+           de ahí se copia y se pega en cualquier lado sin pensarlo */
+        esperar(p.win.location.hash).aSer('');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('llegar desde el correo no abre el panel aunque haya sesión guardada', function () {
+      /* Si la sesión vieja ganara, el dueño toca el link del mail y
+         termina adentro del panel sin haber cambiado nada — que es justo
+         lo que fue a hacer, y encima creyendo que ya está.
+
+         Con el código sano no sale ningún pedido a la red: el camino de
+         recuperación corta antes. */
+      try {
+        localStorage.setItem(LS_SESION_NUBE, JSON.stringify({
+          token: 'viejo', refresco: 'viejo', vence: Date.now() + 3600000, mail: 'duenio@local'
+        }));
+      } catch (e) {}
+
+      return abrirPagina('../admin.html' + LINK_DEL_CORREO).then(function (f) {
+        var d = f.contentDocument;
+        esperar(d.querySelector('#form-clave-nueva').hidden).aSerFalso();
+        esperar(d.querySelector('#panel').classList.contains('activo')).aSerFalso();
+      }).then(function () {
+        try { localStorage.removeItem(LS_SESION_NUBE); } catch (e) {}
+        limpiar();
+      }, function (e) {
+        try { localStorage.removeItem(LS_SESION_NUBE); } catch (e2) {}
+        limpiar(); throw e;
+      });
+    });
+
+    prueba('dos contraseñas distintas no llegan al servidor', function () {
+      /* No se ve lo que se escribe y no hay vuelta atrás: un dedazo la
+         dejaría afuera hasta pedir otro correo. */
+      return abrirAcceso(LINK_DEL_CORREO).then(function (p) {
+        var d = p.doc, llamadas = 0;
+        p.win.NUBE_PANEL.cambiarClave = function () { llamadas++; return Promise.resolve(true); };
+
+        d.querySelector('#clave-nueva').value    = 'clavelarga1';
+        d.querySelector('#clave-repetida').value = 'clavelarga2';
+        d.querySelector('#form-clave-nueva')
+         .dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+
+        esperar(llamadas).aSer(0);
+        esperar(d.querySelector('#error-clave-nueva').textContent).aContener('no son iguales');
+        /* y se limpia la repetida, que es la que hay que volver a escribir */
+        esperar(d.querySelector('#clave-repetida').value).aSer('');
+        esperar(d.querySelector('#clave-nueva').value).aSer('clavelarga1');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('una contraseña corta se avisa sin ir hasta el servidor', function () {
+      return abrirAcceso(LINK_DEL_CORREO).then(function (p) {
+        var d = p.doc, llamadas = 0;
+        p.win.NUBE_PANEL.cambiarClave = function () { llamadas++; return Promise.resolve(true); };
+
+        d.querySelector('#clave-nueva').value    = '123';
+        d.querySelector('#clave-repetida').value = '123';
+        d.querySelector('#form-clave-nueva')
+         .dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+
+        esperar(llamadas).aSer(0);
+        esperar(d.querySelector('#error-clave-nueva').textContent).aContener('al menos 6');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('al cambiarla vuelve a entrar y no deja las contraseñas escritas', function () {
+      /* El panel se abre desde el celular, a veces prestado: dejar la
+         contraseña nueva en el campo sería regalarla. */
+      var panel, recibido = null;
+      return abrirAcceso(LINK_DEL_CORREO).then(function (p) {
+        panel = p;
+        p.win.NUBE_PANEL.cambiarClave = function (token, nueva) {
+          recibido = { token: token, nueva: nueva };
+          return Promise.resolve(true);
+        };
+
+        p.doc.querySelector('#clave-nueva').value    = 'la-nueva-clave';
+        p.doc.querySelector('#clave-repetida').value = 'la-nueva-clave';
+        p.doc.querySelector('#form-clave-nueva')
+         .dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+
+        return esperarA(function () {
+          return panel.doc.querySelector('#form-acceso').hidden === false;
+        }, 'no volvió a la pantalla de entrar', 3000);
+      }).then(function () {
+        var d = panel.doc;
+        /* el permiso que viajó es el del link, no una sesión guardada */
+        esperar(recibido.token).aSer('token-del-mail');
+        esperar(recibido.nueva).aSer('la-nueva-clave');
+
+        esperar(d.querySelector('#form-clave-nueva').hidden).aSerVerdadero();
+        esperar(d.querySelector('#clave-nueva').value).aSer('');
+        esperar(d.querySelector('#clave-repetida').value).aSer('');
+        esperar(d.querySelector('#toast').textContent).aContener('contraseña nueva');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
+    prueba('SEGURIDAD · el aviso del correo no delata si el mail existe', function () {
+      /* Si dijera "ese mail no está registrado", cualquiera podría
+         averiguar quién administra el sitio probando direcciones. El
+         servidor ya contesta lo mismo en los dos casos; el cartel
+         también tiene que hacerlo. */
+      var panel;
+      return abrirAcceso().then(function (p) {
+        panel = p;
+        p.win.NUBE_PANEL.pedirRecuperacion = function () { return Promise.resolve(true); };
+
+        p.doc.querySelector('#ir-recuperar').click();
+        esperar(p.doc.querySelector('#form-recuperar').hidden).aSerFalso();
+
+        p.doc.querySelector('#mail-recuperar').value = 'cualquiera@ejemplo.com';
+        p.doc.querySelector('#form-recuperar')
+         .dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+
+        return esperarA(function () {
+          return panel.doc.querySelector('#aviso-recuperar').hidden === false;
+        }, 'no apareció el aviso', 3000);
+      }).then(function () {
+        var texto = panel.doc.querySelector('#aviso-recuperar').textContent.toLowerCase();
+        esperar(texto).aContener('si ese mail');
+        esperar(texto).aNoContener('no está registrado');
+        esperar(texto).aNoContener('no existe');
+        esperar(texto).aNoContener('no encontr');
+      }).then(limpiar, function (e) { limpiar(); throw e; });
+    });
+
     prueba('una clave equivocada no abre el panel ni deja la clave escrita', function () {
       /* El panel se abre desde el celular y a veces prestado. Si al
          errarle quedara la contraseña en el campo, el que mire después
@@ -2759,6 +2922,69 @@
       }).then(function () {
         esperar(b.nube.sesion()).aSer(null);
         esperar(localStorage.getItem(LS_SESION_NUBE)).aSer(null);
+      });
+    });
+
+    prueba('pedir el correo manda el mail y a dónde volver', function () {
+      return banco().then(function (b) {
+        b.contesta({ estado: 200, json: {} });
+        return b.nube.pedirRecuperacion('duenio@local', 'https://sitio/admin.html')
+          .then(function () {
+            var p = b.ultimo();
+            esperar(p.metodo).aSer('POST');
+            esperar(p.url).aContener('/auth/v1/recover');
+            /* sin esto Supabase manda el link a la dirección que tenga
+               configurada, que puede no ser este panel */
+            esperar(p.url).aContener(encodeURIComponent('https://sitio/admin.html'));
+            esperar(JSON.parse(p.cuerpo).email).aSer('duenio@local');
+          });
+      });
+    });
+
+    prueba('si se piden muchos correos seguidos, dice que espere', function () {
+      /* Supabase corta los pedidos repetidos. Es lo único que conviene
+         contarle al dueño, porque se arregla esperando un minuto. */
+      return banco().then(function (b) {
+        b.contesta({ estado: 429, json: { msg: 'For security purposes...' } });
+        return elErrorDe(b.nube.pedirRecuperacion('duenio@local', 'https://sitio/'));
+      }).then(function (msg) {
+        esperar(msg).aContener('Esperá un minuto');
+        esperar(msg).aNoContener('security');
+      });
+    });
+
+    prueba('la contraseña nueva viaja con el permiso que trajo el link', function () {
+      /* No hay sesión iniciada: el dueño llegó acá justamente porque no
+         puede entrar. El permiso sale del correo, no de localStorage. */
+      return banco().then(function (b) {
+        b.contesta({ estado: 200, json: { id: 'u1' } });
+        return b.nube.cambiarClave('token-del-mail', 'la-nueva-clave').then(function () {
+          var p = b.ultimo();
+          esperar(p.metodo).aSer('PUT');
+          esperar(p.url).aContener('/auth/v1/user');
+          esperar(p.cabeceras.Authorization).aSer('Bearer token-del-mail');
+          esperar(JSON.parse(p.cuerpo).password).aSer('la-nueva-clave');
+        });
+      });
+    });
+
+    prueba('un link de correo vencido se explica y dice cómo seguir', function () {
+      return banco().then(function (b) {
+        b.contesta({ estado: 401, json: { msg: 'invalid claim: expired' } });
+        return elErrorDe(b.nube.cambiarClave('token-viejo', 'la-nueva-clave'));
+      }).then(function (msg) {
+        esperar(msg).aContener('venció');
+        esperar(msg).aContener('Pedí el correo de nuevo');
+      });
+    });
+
+    prueba('si el servidor rechaza la contraseña por corta, se entiende', function () {
+      return banco().then(function (b) {
+        b.contesta({ estado: 422, json: { msg: 'Password should be at least 6 characters' } });
+        return elErrorDe(b.nube.cambiarClave('token', '123'));
+      }).then(function (msg) {
+        esperar(msg).aContener('al menos 6');
+        esperar(msg).aNoContener('Password should');
       });
     });
 

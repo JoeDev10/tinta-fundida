@@ -38,9 +38,19 @@ Si no te acordás la contraseña, mirá acá abajo.
 
 ## Me olvidé la contraseña
 
-El panel **no tiene** todavía el "olvidé mi contraseña" que ves en otras páginas.
-Se arregla a mano y tarda dos minutos: **escribile a quien te armó el sitio**, te
-pone una nueva y te la pasa.
+Se arregla solo, sin escribirle a nadie:
+
+1. En la pantalla de entrada, tocá **Me olvidé la contraseña**.
+2. Poné tu mail y tocá **Mandame el correo**.
+3. Te llega un correo con un link. Tocalo: te abre el panel pidiéndote la
+   contraseña nueva. La escribís dos veces y listo.
+4. Volvés a entrar con esa.
+
+Si el correo no aparece en un par de minutos, **fijate en el correo no deseado**.
+Y si te dice que esperes, es que lo pediste hace muy poco: aguantá un minuto.
+
+El link **vence** y sirve una sola vez. Si se te pasó la hora, pedí otro: no hay
+ningún problema en pedirlo las veces que haga falta.
 
 Tres cosas para que estés tranquilo:
 
@@ -51,21 +61,19 @@ Tres cosas para que estés tranquilo:
 - **Nadie puede leer tu contraseña, ni siquiera quien administra el servidor.**
   Está guardada revuelta a propósito. Por eso no se "consulta": se reemplaza.
 
-Cuando tengas la nueva, cambiala apenas puedas por una tuya —hoy eso también lo
-hace quien te armó el sitio— y no la uses en ningún otro lado.
+Elegí una que no uses en ningún otro lado.
 
-> **Para quien toca el código.** Dashboard de Supabase → *Authentication* →
-> *Users* → buscás el mail → menú de los tres puntos de esa fila → la opción de
-> cambiarle la contraseña. Escribís una nueva y listo: la sesión vieja se cae y
-> entra con esa.
+> **Para quien toca el código.** Para que el link del correo vuelva al panel, la
+> dirección tiene que estar autorizada en Supabase: *Authentication* → *URL
+> Configuration* → **Redirect URLs**, agregando
+> `https://joedev10.github.io/tinta-fundida/admin.html`. Sin eso Supabase manda
+> el link a la dirección por defecto y el dueño toca el link y no llega a
+> ninguna parte.
 >
-> No sirve mandar el mail de recuperación (*Send password recovery*): el link
-> llega bien, pero cae en un panel que no tiene pantalla para escribir la
-> contraseña nueva, así que no termina en ningún lado. Mientras eso no exista, el
-> camino es el de arriba.
->
-> Pasale la clave por un canal distinto del mail de la cuenta —un WhatsApp
-> alcanza— y no la escribas en ningún archivo del repo.
+> Si alguna vez hay que hacerlo a mano igual: *Authentication* → *Users* →
+> buscás el mail → menú de los tres puntos → cambiarle la contraseña. Pasala por
+> un canal distinto del mail de la cuenta —un WhatsApp alcanza— y no la escribas
+> en ningún archivo del repo.
 
 ---
 
@@ -295,9 +303,10 @@ por si el archivo reaparece en un respaldo restaurado.
 > legible en GitHub. No afecta al sitio —esa clave ya no abre nada— pero si se
 > usó en algún otro lado, hay que cambiarla ahí.
 
-**Falta:** `js/nube-panel.js` —el que habla con el servidor— no tiene pruebas
-propias; las del panel le ponen adelante una nube de mentira. Y el panel no tiene
-"olvidé mi contraseña": hoy se resuelve a mano (ver *Me olvidé la contraseña*).
+**Falta:** nada urgente. `js/nube-panel.js` ya tiene su propio grupo de pruebas
+—se carga de verdad contra un servidor inventado— y el "olvidé mi contraseña" ya
+está hecho (ver *Me olvidé la contraseña*). Lo que sigue sin cubrirse es que el
+sitio se **vea** bien, no que funcione: eso hoy se mira a ojo.
 
 ---
 

@@ -17,7 +17,7 @@
 <section class="acceso" id="acceso">
   <div class="acceso__caja">
     <div class="logo" id="logo-acceso"></div>
-    <p>Panel de administración</p>
+    <p id="subtitulo-acceso">Panel de administración</p>
 
     <form id="form-acceso">
       <div class="campo">
@@ -30,9 +30,38 @@
       </div>
       <p class="acceso__error" id="error-acceso" role="alert"></p>
       <button class="btn btn--lleno" type="submit" style="width:100%;margin-top:.6rem"><span id="txt-entrar">Entrar</span></button>
+      <button class="acceso__link" type="button" id="ir-recuperar">Me olvidé la contraseña</button>
     </form>
 
-    <p style="margin-top:1.6rem;font-size:.76rem;border-top:1px solid var(--line);padding-top:1.2rem">
+    <!-- Paso 1: pedir el correo. -->
+    <form id="form-recuperar" hidden>
+      <div class="campo">
+        <label for="mail-recuperar">Tu mail</label>
+        <input type="email" id="mail-recuperar" autocomplete="username" placeholder="vos@ejemplo.com" required>
+      </div>
+      <p class="acceso__error" id="error-recuperar" role="alert"></p>
+      <p class="acceso__aviso" id="aviso-recuperar" role="status" hidden></p>
+      <button class="btn btn--lleno" type="submit" style="width:100%;margin-top:.6rem"><span id="txt-recuperar">Mandame el correo</span></button>
+      <button class="acceso__link" type="button" id="volver-acceso">Volver</button>
+    </form>
+
+    <!-- Paso 2: se llega acá desde el link del mail, que trae el permiso
+         en la dirección. Por eso esta pantalla no pide la contraseña
+         vieja: el dueño está justamente porque no la tiene. -->
+    <form id="form-clave-nueva" hidden>
+      <div class="campo">
+        <label for="clave-nueva">Tu contraseña nueva</label>
+        <input type="password" id="clave-nueva" autocomplete="new-password" placeholder="••••••••" minlength="6" required>
+      </div>
+      <div class="campo">
+        <label for="clave-repetida">Escribila otra vez</label>
+        <input type="password" id="clave-repetida" autocomplete="new-password" placeholder="••••••••" minlength="6" required>
+      </div>
+      <p class="acceso__error" id="error-clave-nueva" role="alert"></p>
+      <button class="btn btn--lleno" type="submit" style="width:100%;margin-top:.6rem"><span id="txt-clave-nueva">Guardar la contraseña</span></button>
+    </form>
+
+    <p class="acceso__pie" id="pie-acceso">
       Entrás con el mismo mail y contraseña desde cualquier lado: la computadora,
       el celular o la tablet. Lo que cargues acá lo ven tus clientes al toque.
     </p>
